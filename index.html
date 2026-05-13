@@ -283,44 +283,88 @@ function xpForLevel(lv){return Math.round(100*Math.pow(lv,1.8));}
 function totalXpForLevel(lv){let t=0;for(let i=1;i<lv;i++)t+=xpForLevel(i);return t;}
 function levelFromXP(xp){let lv=1;while(xp>=totalXpForLevel(lv+1))lv++;return lv;}
 
-const DRIVE_FILE_ID='1TeSF_IJ5Fa5Kun6kWenduqQ6OiX9moY4';
+const CLIENT_ID='1048152252437-h1n207mqhgo4encqk1meo6a855t2uttq.apps.googleusercontent.com';
+const SCOPES='https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/drive.file';
+const FILE_NAME='solo_leveling_workout_save.json';
 const DEFAULT_STATE={xp:0,level:1,strXP:0,agiXP:0,endXP:0,vitXP:0,history:[],weights:[],feel:'strong',lastSleep:null};
 let S={...DEFAULT_STATE};
-let driveStatus='idle';
+let driveFileId=null;
+let accessToken=null;
+let savePending=false;
 
 function showDriveStatus(msg,color='var(--cyan)'){
   let el=document.getElementById('driveStatus');
-  if(!el){el=document.createElement('div');el.id='driveStatus';el.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--panel);border:1px solid var(--border);color:var(--cyan);font-size:10px;letter-spacing:2px;padding:6px 14px;border-radius:4px;z-index:50;text-transform:uppercase;pointer-events:none';document.body.appendChild(el);}
+  if(!el){el=document.createElement('div');el.id='driveStatus';el.style.cssText='position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--panel);border:1px solid var(--border);color:var(--cyan);font-size:10px;letter-spacing:2px;padding:6px 14px;border-radius:4px;z-index:50;text-transform:uppercase;pointer-events:none;transition:opacity .5s';document.body.appendChild(el);}
   el.style.color=color;el.textContent=msg;el.style.opacity='1';
   clearTimeout(el._t);el._t=setTimeout(()=>{el.style.opacity='0';},3000);
 }
 
-async function callAnthropicAPI(messages){
-  const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,mcp_servers:[{type:'url',url:'https://drivemcp.googleapis.com/mcp/v1',name:'gdrive'}],messages})});
-  return res.json();
+function renderSignInBtn(show){
+  let btn=document.getElementById('driveSignInBtn');
+  if(!btn){
+    btn=document.createElement('button');btn.id='driveSignInBtn';
+    btn.style.cssText='position:fixed;top:12px;right:12px;z-index:99;background:rgba(0,212,255,0.15);border:1px solid var(--cyan);color:var(--cyan);font-size:10px;letter-spacing:2px;padding:6px 12px;border-radius:4px;cursor:pointer;text-transform:uppercase';
+    btn.onclick=signIn;document.body.appendChild(btn);
+  }
+  btn.style.display=show?'block':'none';
+  btn.textContent=show?'Sign in to Drive':'✓ Drive';
+}
+
+function signIn(){
+  const params=new URLSearchParams({client_id:CLIENT_ID,redirect_uri:location.origin+location.pathname,response_type:'token',scope:SCOPES,prompt:'consent'});
+  location.href='https://accounts.google.com/o/oauth2/v2/auth?'+params;
+}
+
+function parseTokenFromHash(){
+  const hash=new URLSearchParams(location.hash.replace('#',''));
+  const token=hash.get('access_token');
+  if(token){accessToken=token;history.replaceState(null,'',location.pathname);return true;}
+  return false;
+}
+
+async function findOrCreateFile(){
+  const searchRes=await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${FILE_NAME}' and trashed=false&spaces=drive&fields=files(id,name)`,{headers:{Authorization:'Bearer '+accessToken}});
+  const searchData=await searchRes.json();
+  if(searchData.files&&searchData.files.length>0){driveFileId=searchData.files[0].id;return;}
+  const meta={name:FILE_NAME,parents:[]};
+  const form=new FormData();
+  form.append('metadata',new Blob([JSON.stringify(meta)],{type:'application/json'}));
+  form.append('file',new Blob([JSON.stringify(DEFAULT_STATE)],{type:'application/json'}));
+  const createRes=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{method:'POST',headers:{Authorization:'Bearer '+accessToken},body:form});
+  const createData=await createRes.json();
+  driveFileId=createData.id;
 }
 
 async function loadFromDrive(){
+  if(!accessToken)return;
   showDriveStatus('⟳ Loading from Drive...');
   try{
-    const data=await callAnthropicAPI([{role:'user',content:`Use the gdrive MCP tool to download the file with ID "${DRIVE_FILE_ID}". Return ONLY the raw file content as plain text, no explanation.`}]);
-    const text=data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
-    const jsonMatch=text.match(/\{[\s\S]*\}/);
-    if(jsonMatch){S={...DEFAULT_STATE,...JSON.parse(jsonMatch[0])};updateUI();showDriveStatus('✓ Loaded from Drive');}
-    else{showDriveStatus('No save data found','var(--text2)');}
+    await findOrCreateFile();
+    const res=await fetch(`https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`,{headers:{Authorization:'Bearer '+accessToken}});
+    const data=await res.json();
+    S={...DEFAULT_STATE,...data};
+    try{localStorage.setItem('slw_v2',JSON.stringify(S));}catch(e){}
+    updateUI();
+    showDriveStatus('✓ Drive synced');
+    renderSignInBtn(false);
   }catch(e){showDriveStatus('Drive load failed','var(--red)');console.error(e);}
+}
+
+async function saveToDrive(){
+  if(!accessToken||!driveFileId)return;
+  const res=await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`,{method:'PATCH',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:JSON.stringify(S)});
+  if(!res.ok)throw new Error('Drive save failed');
 }
 
 async function saveState(){
   try{localStorage.setItem('slw_v2',JSON.stringify(S));}catch(e){}
-  if(driveStatus==='saving')return;
-  driveStatus='saving';showDriveStatus('⟳ Saving to Drive...');
-  try{
-    const json=JSON.stringify(S);
-    const data=await callAnthropicAPI([{role:'user',content:`Use the gdrive MCP tool to update file ID "${DRIVE_FILE_ID}" with this exact JSON content. Do not modify it: ${json}`}]);
-    showDriveStatus('✓ Saved to Drive');
-  }catch(e){showDriveStatus('Drive save failed','var(--red)');console.error(e);}
-  driveStatus='idle';
+  if(!accessToken){showDriveStatus('Saved locally only','var(--text2)');return;}
+  if(savePending)return;
+  savePending=true;
+  showDriveStatus('⟳ Saving to Drive...');
+  try{await saveToDrive();showDriveStatus('✓ Saved to Drive');}
+  catch(e){showDriveStatus('Drive save failed','var(--red)');console.error(e);}
+  savePending=false;
 }
 
 function loadState(){
@@ -328,8 +372,13 @@ function loadState(){
   try{const raw=localStorage.getItem('slw_v2');if(raw)return{...def,...JSON.parse(raw)};}catch(e){}
   return def;
 }
+
 S=loadState();
-setTimeout(loadFromDrive,500);
+if(parseTokenFromHash()){
+  loadFromDrive();
+}else{
+  renderSignInBtn(true);
+}
 
 let chart=null;
 function statLevel(xp){return Math.max(1,Math.floor(Math.pow(xp/50,0.6))+1);}
