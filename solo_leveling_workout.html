@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solo Leveling Workout</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#050d1a;color:#a8d8f0;font-family:'Segoe UI',sans-serif;min-height:100vh;overflow-x:hidden}
+:root{--cyan:#00d4ff;--cyan2:#0099bb;--dark:#050d1a;--panel:#081828;--panel2:#0a1f35;--border:#0e3a5a;--text:#a8d8f0;--text2:#5a8fa8;--gold:#f0c040;--green:#00ff88;--red:#ff4466}
+.scanline{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,212,255,0.01) 2px,rgba(0,212,255,0.01) 4px);z-index:0}
+.app{position:relative;z-index:1;max-width:480px;margin:0 auto;padding:0 0 80px}
+.header{text-align:center;padding:20px 16px 8px;border-bottom:1px solid var(--border)}
+.header h1{font-size:11px;letter-spacing:6px;color:var(--text2);text-transform:uppercase;margin-bottom:4px}
+.header .player-name{font-size:22px;font-weight:700;color:var(--cyan);text-shadow:0 0 20px rgba(0,212,255,0.4);letter-spacing:2px}
+.nav{display:flex;background:var(--panel);border-bottom:1px solid var(--border)}
+.nav button{flex:1;padding:12px 4px;background:none;border:none;color:var(--text2);font-size:10px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
+.nav button.active{color:var(--cyan);border-bottom-color:var(--cyan)}
+.tab{display:none;padding:16px}
+.tab.active{display:block}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:4px;padding:14px;margin-bottom:12px;position:relative}
+.panel::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:.5}
+.panel-title{font-size:9px;letter-spacing:3px;color:var(--text2);text-transform:uppercase;margin-bottom:10px}
+.level-display{text-align:center;padding:10px 0}
+.level-num{font-size:64px;font-weight:900;color:#fff;line-height:1;text-shadow:0 0 30px rgba(0,212,255,0.6)}
+.level-label{font-size:9px;letter-spacing:4px;color:var(--text2);text-transform:uppercase;margin-top:4px}
+.title-badge{display:inline-block;background:rgba(0,212,255,0.1);border:1px solid var(--cyan2);color:var(--cyan);font-size:11px;letter-spacing:2px;padding:4px 14px;border-radius:2px;margin:8px 0}
+.xp-bar-wrap{margin:10px 0 4px}
+.xp-bar-bg{background:rgba(0,212,255,0.1);border:1px solid var(--border);border-radius:2px;height:10px;overflow:hidden}
+.xp-bar-fill{height:100%;background:linear-gradient(90deg,var(--cyan2),var(--cyan));border-radius:2px;transition:width .5s ease}
+.xp-text{display:flex;justify-content:space-between;font-size:10px;color:var(--text2);margin-top:4px}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat-box{background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:10px;display:flex;align-items:center;gap:8px}
+.stat-icon{font-size:18px;opacity:.8}
+.stat-label{font-size:9px;color:var(--text2);letter-spacing:1px;text-transform:uppercase}
+.stat-val{font-size:18px;font-weight:700;color:#fff;line-height:1.2}
+.stat-sub{font-size:9px;color:var(--text2)}
+.form-group{margin-bottom:12px}
+.form-label{font-size:10px;letter-spacing:2px;color:var(--text2);text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between}
+.form-row{display:flex;gap:8px;align-items:center}
+input[type=number]{background:var(--panel2);border:1px solid var(--border);color:#fff;padding:8px 10px;border-radius:4px;font-size:14px;width:100%;outline:none;transition:border .2s}
+input[type=number]:focus{border-color:var(--cyan)}
+input[type=checkbox]{width:16px;height:16px;accent-color:var(--cyan)}
+.toggle-wrap{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2)}
+select{background:var(--panel2);border:1px solid var(--border);color:#fff;padding:8px 10px;border-radius:4px;font-size:13px;outline:none}
+.btn-primary{width:100%;padding:13px;background:rgba(0,212,255,0.15);border:1px solid var(--cyan);color:var(--cyan);font-size:12px;letter-spacing:3px;text-transform:uppercase;border-radius:4px;cursor:pointer;transition:all .2s;font-weight:600}
+.btn-primary:hover{background:rgba(0,212,255,0.25)}
+.btn-primary:active{transform:scale(.98)}
+.pace-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:2px;font-size:11px;border:1px solid;margin-left:8px}
+.tip-card{background:rgba(0,212,255,0.05);border:1px solid rgba(0,212,255,0.2);border-radius:4px;padding:10px 12px;margin-bottom:8px;font-size:12px;line-height:1.5}
+.tip-card .tip-icon{color:var(--cyan);margin-right:6px}
+.xp-gain{display:none;background:rgba(0,255,136,0.1);border:1px solid var(--green);border-radius:4px;padding:12px;text-align:center;margin-bottom:12px}
+.xp-gain.show{display:block}
+.xp-gain-num{font-size:24px;font-weight:700;color:var(--green)}
+.xp-gain-label{font-size:10px;color:var(--text2);letter-spacing:2px;text-transform:uppercase;margin-top:2px}
+.history-item{background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:10px 12px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
+.history-date{font-size:10px;color:var(--text2)}
+.history-xp{color:var(--cyan);font-size:13px;font-weight:600}
+.chart-wrap{position:relative;width:100%;height:200px;margin-top:8px}
+.chart-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.chart-tab{padding:5px 10px;font-size:10px;letter-spacing:1px;text-transform:uppercase;background:var(--panel2);border:1px solid var(--border);color:var(--text2);border-radius:2px;cursor:pointer}
+.chart-tab.active{border-color:var(--cyan);color:var(--cyan)}
+.weight-trend{display:flex;align-items:center;gap:8px;font-size:14px}
+.trend-up{color:#ff8844}
+.trend-down{color:#44aaff}
+.trend-stable{color:var(--green)}
+.sleep-quality{display:flex;gap:4px;margin-top:6px}
+.sq-block{flex:1;height:6px;border-radius:1px;background:var(--border)}
+.sq-block.filled{background:var(--cyan)}
+.section-divider{font-size:9px;letter-spacing:3px;color:var(--text2);text-transform:uppercase;margin:16px 0 10px;display:flex;align-items:center;gap:8px}
+.section-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.feel-btn{flex:1;padding:7px 4px;background:var(--panel2);border:1px solid var(--border);color:var(--text2);font-size:10px;text-transform:uppercase;letter-spacing:1px;border-radius:4px;cursor:pointer;text-align:center;transition:all .2s}
+.feel-btn.active{border-color:var(--cyan);color:var(--cyan);background:rgba(0,212,255,0.1)}
+.level-up-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:100;align-items:center;justify-content:center;flex-direction:column;text-align:center}
+.level-up-overlay.show{display:flex}
+.level-up-text{font-size:11px;letter-spacing:6px;color:var(--cyan);text-transform:uppercase;margin-bottom:8px}
+.level-up-num{font-size:80px;font-weight:900;color:#fff;text-shadow:0 0 40px rgba(0,212,255,0.8)}
+.level-up-title{font-size:16px;color:var(--gold);letter-spacing:3px;margin-top:8px}
+.level-up-btn{margin-top:24px;padding:10px 30px;background:transparent;border:1px solid var(--cyan);color:var(--cyan);font-size:11px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;border-radius:4px}
+.body-comp{display:flex;align-items:center;justify-content:space-between}
+.consistency-dots{display:flex;gap:4px;margin-top:6px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--border)}
+.dot.filled{background:var(--cyan)}
+.dot.today{background:var(--gold)}
+</style>
+</head>
+<body>
+<div class="scanline"></div>
+<div class="app">
+<div class="header">
+  <div class="player-name" id="playerName">HUNTER</div>
+  <div style="font-size:10px;letter-spacing:3px;color:var(--text2);margin-top:2px">SYSTEM — WORKOUT INTERFACE</div>
+</div>
+<nav class="nav">
+  <button class="active" onclick="showTab('status')">Status</button>
+  <button onclick="showTab('log')">Log</button>
+  <button onclick="showTab('stats')">Stats</button>
+  <button onclick="showTab('tips')">Tips</button>
+</nav>
+
+<div id="tab-status" class="tab active">
+  <div class="panel">
+    <div class="level-display">
+      <div class="level-num" id="levelNum">1</div>
+      <div class="level-label">Level</div>
+      <div class="title-badge" id="titleBadge">Novice Hunter</div>
+    </div>
+    <div class="xp-bar-wrap">
+      <div class="xp-bar-bg"><div class="xp-bar-fill" id="xpBar" style="width:0%"></div></div>
+      <div class="xp-text"><span id="xpCurrent">0 XP</span><span id="xpNext">200 XP to next</span></div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">Attributes</div>
+    <div class="stats-grid">
+      <div class="stat-box"><span class="stat-icon">💪</span><div><div class="stat-label">Strength</div><div class="stat-val" id="strVal">1</div><div class="stat-sub">Lv. <span id="strLv">1</span></div></div></div>
+      <div class="stat-box"><span class="stat-icon">⚡</span><div><div class="stat-label">Agility</div><div class="stat-val" id="agiVal">1</div><div class="stat-sub">Lv. <span id="agiLv">1</span></div></div></div>
+      <div class="stat-box"><span class="stat-icon">🏃</span><div><div class="stat-label">Endurance</div><div class="stat-val" id="endVal">1</div><div class="stat-sub">Lv. <span id="endLv">1</span></div></div></div>
+      <div class="stat-box"><span class="stat-icon">❤️</span><div><div class="stat-label">Vitality</div><div class="stat-val" id="vitVal">1</div><div class="stat-sub">Lv. <span id="vitLv">1</span></div></div></div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">Body Composition</div>
+    <div class="body-comp">
+      <div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Current Weight</div>
+        <div style="font-size:20px;font-weight:700;color:#fff" id="weightDisplay">—</div>
+        <div class="weight-trend" id="weightTrend"></div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">7-Day Streak</div>
+        <div class="consistency-dots" id="streakDots"></div>
+        <div style="font-size:10px;color:var(--text2);margin-top:6px">Activity Sync</div>
+        <div style="font-size:13px;color:var(--cyan)" id="activitySync">—</div>
+      </div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">Sleep Status</div>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-size:20px;font-weight:700;color:#fff" id="sleepDisplay">—</div>
+        <div style="font-size:10px;color:var(--text2)" id="sleepLabel">No data</div>
+      </div>
+      <div style="font-size:11px;color:var(--text2);text-align:right" id="sleepXpInfo"></div>
+    </div>
+    <div class="sleep-quality" id="sleepBlocks"></div>
+  </div>
+</div>
+
+<div id="tab-log" class="tab">
+  <div id="xpGainBox" class="xp-gain">
+    <div class="xp-gain-num" id="xpGainNum">+0 XP</div>
+    <div class="xp-gain-label">Experience Gained</div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">Strength Training</div>
+    <div class="form-group">
+      <div class="form-label">Sit-ups <span class="toggle-wrap"><input type="checkbox" id="suWeighted"> Weighted <input type="number" id="suWeight" placeholder="kg" style="width:55px;display:none;margin-left:4px"></span></div>
+      <input type="number" id="situps" placeholder="Reps" min="0">
+    </div>
+    <div class="form-group">
+      <div class="form-label">Push-ups <span class="toggle-wrap"><input type="checkbox" id="puWeighted"> Weighted <input type="number" id="puWeight" placeholder="kg" style="width:55px;display:none;margin-left:4px"></span></div>
+      <input type="number" id="pushups" placeholder="Reps" min="0">
+    </div>
+    <div class="form-group">
+      <div class="form-label">Squats <span class="toggle-wrap"><input type="checkbox" id="sqWeighted"> Weighted <input type="number" id="sqWeight" placeholder="kg" style="width:55px;display:none;margin-left:4px"></span></div>
+      <input type="number" id="squats" placeholder="Reps" min="0">
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">Cardio</div>
+    <div class="form-group">
+      <div class="form-label">Distance</div>
+      <div class="form-row">
+        <input type="number" id="distance" placeholder="0.0" step="0.1" style="flex:1">
+        <select id="distUnit" style="width:70px"><option value="km">km</option><option value="mi">mi</option></select>
+      </div>
+    </div>
+    <div class="form-group">
+      <div class="form-label">Time (mins) <span id="paceBadge"></span></div>
+      <input type="number" id="runTime" placeholder="Optional — for pace bonus" min="0">
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">Backdate This Workout? <span style="font-size:9px;color:var(--text2)">(optional)</span></div>
+    <div class="form-group">
+      <div class="form-label">Date</div>
+      <input type="date" id="backdateDate" style="background:var(--panel2);border:1px solid var(--border);color:#fff;padding:8px 10px;border-radius:4px;font-size:14px;width:100%;outline:none">
+    </div>
+    <div class="form-group">
+      <div class="form-label">Time</div>
+      <input type="time" id="backdateTime" style="background:var(--panel2);border:1px solid var(--border);color:#fff;padding:8px 10px;border-radius:4px;font-size:14px;width:100%;outline:none">
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">Recovery</div>
+    <div class="form-group">
+      <div class="form-label">Sleep Last Night (hours)</div>
+      <input type="number" id="sleepHours" placeholder="e.g. 8" min="0" max="24" step="0.5">
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">Body Check-in</div>
+    <div class="form-group">
+      <div class="form-label">Weight <span style="font-size:9px;color:var(--text2)">(kg or lbs)</span></div>
+      <div class="form-row">
+        <input type="number" id="weightInput" placeholder="e.g. 80" step="0.1" style="flex:1">
+        <select id="weightUnit" style="width:70px"><option value="kg">kg</option><option value="lbs">lbs</option></select>
+      </div>
+    </div>
+    <div class="form-group">
+      <div class="form-label">How do you feel?</div>
+      <div style="display:flex;gap:6px" id="feelBtns">
+        <div class="feel-btn" data-val="heavy" onclick="setFeel(this)">Heavy</div>
+        <div class="feel-btn" data-val="normal" onclick="setFeel(this)">Normal</div>
+        <div class="feel-btn active" data-val="strong" onclick="setFeel(this)">Strong</div>
+      </div>
+    </div>
+  </div>
+  <button class="btn-primary" onclick="logWorkout()">▶ SUBMIT WORKOUT</button>
+</div>
+
+<div id="tab-stats" class="tab">
+  <div class="chart-tabs" id="chartTabs">
+    <div class="chart-tab active" onclick="showChart('combined',this)">Combined</div>
+    <div class="chart-tab" onclick="showChart('situps',this)">Sit-ups</div>
+    <div class="chart-tab" onclick="showChart('pushups',this)">Push-ups</div>
+    <div class="chart-tab" onclick="showChart('squats',this)">Squats</div>
+    <div class="chart-tab" onclick="showChart('run',this)">Run</div>
+    <div class="chart-tab" onclick="showChart('sleep',this)">Sleep</div>
+    <div class="chart-tab" onclick="showChart('weight',this)">Weight</div>
+  </div>
+  <div class="panel">
+    <div class="panel-title" id="chartTitle">Total XP Over Time</div>
+    <div class="chart-wrap"><canvas id="mainChart" role="img" aria-label="Workout progress chart"></canvas></div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">All-Time Records</div>
+    <div id="recordsDisplay" style="font-size:12px;line-height:2;color:var(--text2)">No workouts logged yet.</div>
+  </div>
+  <div id="historyList"></div>
+</div>
+
+<div id="tab-tips" class="tab">
+  <div class="panel">
+    <div class="panel-title">Hunter Tips</div>
+    <div id="tipsContainer"><div style="font-size:12px;color:var(--text2)">Log a workout to generate personalised tips.</div></div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">XP Guide</div>
+    <div style="font-size:11px;color:var(--text2);line-height:2">
+      <div>💪 Sit-up: <span style="color:#fff">1 XP/rep</span> (+0.3× per kg weight)</div>
+      <div>💪 Push-up: <span style="color:#fff">1.2 XP/rep</span> (+0.3× per kg)</div>
+      <div>💪 Squat: <span style="color:#fff">1.5 XP/rep</span> (+0.3× per kg)</div>
+      <div>🏃 Run: <span style="color:#fff">20 XP/km</span> + pace multiplier</div>
+      <div>🐢 Jog (&lt;6km/h): <span style="color:#fff">1×</span></div>
+      <div>🏃 Run (6-12km/h): <span style="color:#fff">1.4×</span></div>
+      <div>⚡ Sprint (&gt;12km/h): <span style="color:#fff">2×</span></div>
+      <div>😴 Sleep 8h: <span style="color:#fff">50 XP (max)</span></div>
+      <div>⚖️ Weight: <span style="color:#fff">Effort-based bonus</span></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="level-up-overlay" id="levelUpOverlay">
+  <div class="level-up-text">Level Up</div>
+  <div class="level-up-num" id="levelUpNum">2</div>
+  <div class="level-up-title" id="levelUpTitle">Iron Hunter</div>
+  <button class="level-up-btn" onclick="closeLevelUp()">CONTINUE ▶</button>
+</div>
+
+<script>
+const TITLES=[
+  [1,'Novice Hunter'],[5,'Iron Hunter'],[10,'Bronze Warrior'],[15,'Silver Blade'],
+  [20,'Gold Sentinel'],[30,'Platinum Guardian'],[40,'Diamond Phantom'],
+  [50,'Shadow Monarch'],[75,'Void Walker'],[100,'Absolute Hunter'],[150,'God of Hunters']
+];
+function getTitle(lv){let t=TITLES[0];for(let[l,n]of TITLES){if(lv>=l)t=[l,n];}return t[1];}
+function xpForLevel(lv){return Math.round(100*Math.pow(lv,1.8));}
+function totalXpForLevel(lv){let t=0;for(let i=1;i<lv;i++)t+=xpForLevel(i);return t;}
+function levelFromXP(xp){let lv=1;while(xp>=totalXpForLevel(lv+1))lv++;return lv;}
+
+const DRIVE_FILE_ID='1TeSF_IJ5Fa5Kun6kWenduqQ6OiX9moY4';
+const DEFAULT_STATE={xp:0,level:1,strXP:0,agiXP:0,endXP:0,vitXP:0,history:[],weights:[],feel:'strong',lastSleep:null};
+let S={...DEFAULT_STATE};
+let driveStatus='idle';
+
+function showDriveStatus(msg,color='var(--cyan)'){
+  let el=document.getElementById('driveStatus');
+  if(!el){el=document.createElement('div');el.id='driveStatus';el.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--panel);border:1px solid var(--border);color:var(--cyan);font-size:10px;letter-spacing:2px;padding:6px 14px;border-radius:4px;z-index:50;text-transform:uppercase;pointer-events:none';document.body.appendChild(el);}
+  el.style.color=color;el.textContent=msg;el.style.opacity='1';
+  clearTimeout(el._t);el._t=setTimeout(()=>{el.style.opacity='0';},3000);
+}
+
+async function callAnthropicAPI(messages){
+  const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,mcp_servers:[{type:'url',url:'https://drivemcp.googleapis.com/mcp/v1',name:'gdrive'}],messages})});
+  return res.json();
+}
+
+async function loadFromDrive(){
+  showDriveStatus('⟳ Loading from Drive...');
+  try{
+    const data=await callAnthropicAPI([{role:'user',content:`Use the gdrive MCP tool to download the file with ID "${DRIVE_FILE_ID}". Return ONLY the raw file content as plain text, no explanation.`}]);
+    const text=data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+    const jsonMatch=text.match(/\{[\s\S]*\}/);
+    if(jsonMatch){S={...DEFAULT_STATE,...JSON.parse(jsonMatch[0])};updateUI();showDriveStatus('✓ Loaded from Drive');}
+    else{showDriveStatus('No save data found','var(--text2)');}
+  }catch(e){showDriveStatus('Drive load failed','var(--red)');console.error(e);}
+}
+
+async function saveState(){
+  try{localStorage.setItem('slw_v2',JSON.stringify(S));}catch(e){}
+  if(driveStatus==='saving')return;
+  driveStatus='saving';showDriveStatus('⟳ Saving to Drive...');
+  try{
+    const json=JSON.stringify(S);
+    const data=await callAnthropicAPI([{role:'user',content:`Use the gdrive MCP tool to update file ID "${DRIVE_FILE_ID}" with this exact JSON content. Do not modify it: ${json}`}]);
+    showDriveStatus('✓ Saved to Drive');
+  }catch(e){showDriveStatus('Drive save failed','var(--red)');console.error(e);}
+  driveStatus='idle';
+}
+
+function loadState(){
+  const def={...DEFAULT_STATE};
+  try{const raw=localStorage.getItem('slw_v2');if(raw)return{...def,...JSON.parse(raw)};}catch(e){}
+  return def;
+}
+S=loadState();
+setTimeout(loadFromDrive,500);
+
+let chart=null;
+function statLevel(xp){return Math.max(1,Math.floor(Math.pow(xp/50,0.6))+1);}
+
+function updateUI(){
+  const lv=levelFromXP(S.xp);
+  S.level=lv;
+  const curLvXP=totalXpForLevel(lv);
+  const nextLvXP=totalXpForLevel(lv+1);
+  const pct=Math.min(100,Math.round((S.xp-curLvXP)/(nextLvXP-curLvXP)*100));
+  document.getElementById('levelNum').textContent=lv;
+  document.getElementById('titleBadge').textContent=getTitle(lv);
+  document.getElementById('xpBar').style.width=pct+'%';
+  document.getElementById('xpCurrent').textContent=S.xp.toLocaleString()+' XP total';
+  document.getElementById('xpNext').textContent=(nextLvXP-S.xp).toLocaleString()+' XP to Lv '+(lv+1);
+  const sLv=statLevel(S.strXP),aLv=statLevel(S.agiXP),eLv=statLevel(S.endXP),vLv=statLevel(S.vitXP);
+  document.getElementById('strVal').textContent=sLv;document.getElementById('strLv').textContent=sLv;
+  document.getElementById('agiVal').textContent=aLv;document.getElementById('agiLv').textContent=aLv;
+  document.getElementById('endVal').textContent=eLv;document.getElementById('endLv').textContent=eLv;
+  document.getElementById('vitVal').textContent=vLv;document.getElementById('vitLv').textContent=vLv;
+  updateWeightDisplay();
+  updateSleepDisplay();
+  updateStreak();
+  updateRecords();
+  generateTips();
+}
+
+function updateWeightDisplay(){
+  if(!S.weights||S.weights.length===0){document.getElementById('weightDisplay').textContent='—';return;}
+  const w=S.weights;
+  const last=w[w.length-1];
+  document.getElementById('weightDisplay').textContent=last.val+' '+last.unit;
+  let trend='';
+  if(w.length>=2){
+    const diff=last.val-w[w.length-2].val;
+    if(Math.abs(diff)<0.5){trend='<span class="trend-stable">→ Stable</span>';}
+    else if(diff>0){trend='<span class="trend-up">↑ +'+Math.abs(diff).toFixed(1)+'</span>';}
+    else{trend='<span class="trend-down">↓ -'+Math.abs(diff).toFixed(1)+'</span>';}
+  }
+  document.getElementById('weightTrend').innerHTML=trend;
+  const recent7=S.history.slice(-7).filter(h=>h.situps>0||h.pushups>0||h.squats>0||h.distance>0).length;
+  const sync=recent7>=5?'High Activity':recent7>=3?'Moderate':'Low Activity';
+  document.getElementById('activitySync').textContent=sync;
+}
+
+function updateSleepDisplay(){
+  if(!S.lastSleep){document.getElementById('sleepDisplay').textContent='—';document.getElementById('sleepBlocks').innerHTML='';return;}
+  const h=S.lastSleep;
+  document.getElementById('sleepDisplay').textContent=h+'h last night';
+  const quality=getSleepQuality(h);
+  document.getElementById('sleepLabel').textContent=quality.label;
+  document.getElementById('sleepXpInfo').textContent=quality.pct+'% XP efficiency';
+  const blocks=document.getElementById('sleepBlocks');
+  blocks.innerHTML='';
+  const filled=Math.round((quality.pct/100)*10);
+  for(let i=0;i<10;i++){const d=document.createElement('div');d.className='sq-block'+(i<filled?' filled':'');blocks.appendChild(d);}
+}
+
+function updateStreak(){
+  const dots=document.getElementById('streakDots');dots.innerHTML='';
+  const days=7;
+  const today=new Date().toDateString();
+  for(let i=days-1;i>=0;i--){
+    const d=new Date();d.setDate(d.getDate()-i);
+    const ds=d.toDateString();
+    const logged=S.history.some(h=>h.date===ds);
+    const el=document.createElement('div');
+    el.className='dot'+(logged?ds===today?' today':' filled':'');
+    dots.appendChild(el);
+  }
+}
+
+function getSleepQuality(h){
+  if(h<=4)return{pct:10,label:'Critical rest deficit'};
+  if(h<=5)return{pct:30,label:'Severely under-rested'};
+  if(h<=6)return{pct:55,label:'Under-rested'};
+  if(h<=6.5)return{pct:70,label:'Below optimal'};
+  if(h<=7)return{pct:82,label:'Near optimal'};
+  if(h<=7.5)return{pct:92,label:'Good rest'};
+  if(h<=9)return{pct:100,label:'Optimal recovery'};
+  if(h<=10)return{pct:80,label:'Slight oversleep'};
+  return{pct:55,label:'Oversleeping detected'};
+}
+
+function weightXPBonus(feel,weights,history){
+  if(!weights||weights.length<2)return 0;
+  const recent=history.slice(-7).filter(h=>h.situps>0||h.pushups>0||h.squats>0||h.distance>0).length;
+  const last=weights[weights.length-1].val;
+  const prev=weights[weights.length-2].val;
+  const diff=last-prev;
+  if(recent>=4){
+    if(feel==='strong')return 30;
+    if(feel==='normal')return 20;
+    return 10;
+  }
+  if(recent<=1&&diff>1)return -10;
+  return 5;
+}
+
+let feelVal='strong';
+function setFeel(el){
+  document.querySelectorAll('.feel-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');feelVal=el.dataset.val;
+}
+
+['suWeighted','puWeighted','sqWeighted'].forEach(id=>{
+  const map={suWeighted:'suWeight',puWeighted:'puWeight',sqWeighted:'sqWeight'};
+  document.getElementById(id).addEventListener('change',function(){
+    document.getElementById(map[id]).style.display=this.checked?'inline-block':'none';
+  });
+});
+
+document.getElementById('distance').addEventListener('input',updatePaceBadge);
+document.getElementById('runTime').addEventListener('input',updatePaceBadge);
+document.getElementById('distUnit').addEventListener('change',updatePaceBadge);
+
+function updatePaceBadge(){
+  const d=parseFloat(document.getElementById('distance').value)||0;
+  const t=parseFloat(document.getElementById('runTime').value)||0;
+  const unit=document.getElementById('distUnit').value;
+  const pb=document.getElementById('paceBadge');
+  if(!d||!t){pb.innerHTML='';return;}
+  const km=unit==='mi'?d*1.609:d;
+  const spd=km/(t/60);
+  let label,color,mult;
+  if(spd<6){label='🐢 Jog';color='#5a8fa8';mult='1.0×';}
+  else if(spd<12){label='🏃 Run';color='#00d4ff';mult='1.4×';}
+  else{label='⚡ Sprint';color='#f0c040';mult='2.0×';}
+  pb.innerHTML=`<span style="color:${color};font-size:11px">${label} ${mult}</span>`;
+}
+
+function logWorkout(){
+  const su=parseInt(document.getElementById('situps').value)||0;
+  const pu=parseInt(document.getElementById('pushups').value)||0;
+  const sq=parseInt(document.getElementById('squats').value)||0;
+  const dist=parseFloat(document.getElementById('distance').value)||0;
+  const runT=parseFloat(document.getElementById('runTime').value)||0;
+  const unit=document.getElementById('distUnit').value;
+  const sleep=parseFloat(document.getElementById('sleepHours').value)||0;
+  const wInput=parseFloat(document.getElementById('weightInput').value)||0;
+  const wUnit=document.getElementById('weightUnit').value;
+  const suW=document.getElementById('suWeighted').checked?(parseFloat(document.getElementById('suWeight').value)||0):0;
+  const puW=document.getElementById('puWeighted').checked?(parseFloat(document.getElementById('puWeight').value)||0):0;
+  const sqW=document.getElementById('sqWeighted').checked?(parseFloat(document.getElementById('sqWeight').value)||0):0;
+  const km=unit==='mi'?dist*1.609:dist;
+
+  let xpGain=0,strXP=0,agiXP=0,endXP=0,vitXP=0;
+  const suXP=Math.round(su*(1+suW*0.3));strXP+=suXP;xpGain+=suXP;
+  const puXP=Math.round(pu*1.2*(1+puW*0.3));strXP+=puXP;xpGain+=puXP;
+  const sqXP=Math.round(sq*1.5*(1+sqW*0.3));strXP+=sqXP;xpGain+=sqXP;
+
+  if(km>0){
+    let mult=1;
+    if(runT>0){const spd=km/(runT/60);if(spd>=12)mult=2;else if(spd>=6)mult=1.4;}
+    const runXP=Math.round(km*20*mult);
+    agiXP+=Math.round(runXP*0.4);endXP+=Math.round(runXP*0.6);xpGain+=runXP;
+  }
+
+  if(sleep>0){
+    const q=getSleepQuality(sleep);
+    const sleepXP=Math.round(50*(q.pct/100));
+    vitXP+=sleepXP;xpGain+=sleepXP;
+    S.lastSleep=sleep;
+  }
+
+  if(wInput>0){
+    S.weights=S.weights||[];
+    S.weights.push({val:wInput,unit:wUnit,date:new Date().toDateString()});
+  }
+
+  const wBonus=weightXPBonus(feelVal,S.weights,S.history);
+  xpGain=Math.max(0,xpGain+wBonus);
+
+  const oldLevel=levelFromXP(S.xp);
+  S.xp+=xpGain;S.strXP+=strXP;S.agiXP+=agiXP;S.endXP+=endXP;S.vitXP+=vitXP;
+  const newLevel=levelFromXP(S.xp);
+
+  const bdDate=document.getElementById('backdateDate').value;
+  const bdTime=document.getElementById('backdateTime').value;
+  let entryDate,entryTime;
+  if(bdDate){
+    const d=new Date(bdDate+'T'+(bdTime||'12:00'));
+    entryDate=d.toDateString();
+    entryTime=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  }else{
+    const now=new Date();
+    entryDate=now.toDateString();
+    entryTime=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  }
+  S.history.push({date:entryDate,time:entryTime,xp:xpGain,situps:su,pushups:pu,squats:sq,distance:dist,unit,sleep,weight:wInput,wUnit,feel:feelVal});
+  S.history.sort((a,b)=>new Date(a.date+' '+a.time)-new Date(b.date+' '+b.time));
+  saveState();
+
+  const box=document.getElementById('xpGainBox');
+  document.getElementById('xpGainNum').textContent='+'+xpGain+' XP'+(wBonus>0?' (w/ body bonus)':wBonus<0?' (activity penalty)':'');
+  box.classList.add('show');setTimeout(()=>box.classList.remove('show'),4000);
+
+  if(newLevel>oldLevel){
+    document.getElementById('levelUpNum').textContent=newLevel;
+    document.getElementById('levelUpTitle').textContent=getTitle(newLevel);
+    document.getElementById('levelUpOverlay').classList.add('show');
+  }
+  updateUI();
+  clearForm();
+  showTab('status');
+}
+
+function clearForm(){
+  ['situps','pushups','squats','distance','runTime','sleepHours','weightInput','suWeight','puWeight','sqWeight','backdateDate','backdateTime'].forEach(id=>document.getElementById(id).value='');
+  ['suWeighted','puWeighted','sqWeighted'].forEach(id=>{document.getElementById(id).checked=false;});
+  ['suWeight','puWeight','sqWeight'].forEach(id=>{document.getElementById(id).style.display='none';});
+  document.getElementById('paceBadge').innerHTML='';
+}
+
+function closeLevelUp(){document.getElementById('levelUpOverlay').classList.remove('show');}
+
+function showTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  const idx={status:0,log:1,stats:2,tips:3}[name];
+  document.querySelectorAll('.nav button')[idx].classList.add('active');
+  if(name==='stats')setTimeout(()=>showChart('combined',document.querySelector('.chart-tab.active')),50);
+}
+
+function showChart(type,el){
+  document.querySelectorAll('.chart-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  const labels=S.history.map(h=>h.date.slice(4,10));
+  let data,label,color;
+  if(type==='combined'){
+    data=S.history.map(h=>h.xp);label='Total XP';color='#00d4ff';
+    document.getElementById('chartTitle').textContent='Total XP Per Session';
+  }else if(type==='situps'){
+    data=S.history.map(h=>h.situps||0);label='Sit-ups';color='#f0c040';
+    document.getElementById('chartTitle').textContent='Sit-ups Over Time';
+  }else if(type==='pushups'){
+    data=S.history.map(h=>h.pushups||0);label='Push-ups';color='#00ff88';
+    document.getElementById('chartTitle').textContent='Push-ups Over Time';
+  }else if(type==='squats'){
+    data=S.history.map(h=>h.squats||0);label='Squats';color='#ff8844';
+    document.getElementById('chartTitle').textContent='Squats Over Time';
+  }else if(type==='run'){
+    data=S.history.map(h=>h.distance||0);label='Distance';color='#aa88ff';
+    document.getElementById('chartTitle').textContent='Distance Run Over Time';
+  }else if(type==='sleep'){
+    data=S.history.map(h=>h.sleep||0);label='Sleep (h)';color='#4488ff';
+    document.getElementById('chartTitle').textContent='Sleep Hours Over Time';
+  }else if(type==='weight'){
+    data=S.history.map(h=>h.weight||null);label='Weight';color='#ff6699';
+    document.getElementById('chartTitle').textContent='Weight Over Time';
+  }
+  if(chart)chart.destroy();
+  const ctx=document.getElementById('mainChart').getContext('2d');
+  chart=new Chart(ctx,{
+    type:'line',
+    data:{labels:labels.length?labels:['No data'],datasets:[{label,data:data.length?data:[0],borderColor:color,backgroundColor:color+'22',borderWidth:2,pointRadius:3,pointBackgroundColor:color,tension:.3,fill:true}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:v=>label+': '+v.parsed.y}}},scales:{x:{ticks:{color:'#5a8fa8',font:{size:10},maxRotation:45},grid:{color:'rgba(0,212,255,0.05)'}},y:{ticks:{color:'#5a8fa8',font:{size:10}},grid:{color:'rgba(0,212,255,0.05)'}}}}
+  });
+}
+
+function updateRecords(){
+  if(!S.history.length){document.getElementById('recordsDisplay').textContent='No workouts logged yet.';return;}
+  const maxSU=Math.max(...S.history.map(h=>h.situps||0));
+  const maxPU=Math.max(...S.history.map(h=>h.pushups||0));
+  const maxSQ=Math.max(...S.history.map(h=>h.squats||0));
+  const maxD=Math.max(...S.history.map(h=>h.distance||0));
+  const recent=S.history.slice(-10).reverse();
+  const histHTML=recent.map(h=>`<div class="history-item"><div><div style="font-size:12px;color:#fff">${h.date}</div><div class="history-date">${h.time||'--:--'} · ${[h.situps&&h.situps+'su',h.pushups&&h.pushups+'pu',h.squats&&h.squats+'sq',h.distance&&h.distance+h.unit].filter(Boolean).join(' · ')||'recovery'}</div></div><div class="history-xp">+${h.xp} XP</div></div>`).join('');
+  document.getElementById('recordsDisplay').innerHTML=
+    `<div>💪 Best Sit-ups: <span style="color:#fff">${maxSU}</span></div>
+    <div>💪 Best Push-ups: <span style="color:#fff">${maxPU}</span></div>
+    <div>💪 Best Squats: <span style="color:#fff">${maxSQ}</span></div>
+    <div>🏃 Longest Run: <span style="color:#fff">${maxD} km/mi</span></div>
+    <div>⚡ Total Sessions: <span style="color:#fff">${S.history.length}</span></div>
+    <div style="margin-top:12px;font-size:9px;letter-spacing:3px;color:var(--text2);text-transform:uppercase;margin-bottom:8px">Recent Sessions</div>${histHTML}`;
+}
+
+function generateTips(){
+  const lv=S.level;
+  const next=lv+1;
+  const xpNeeded=totalXpForLevel(next)-S.xp;
+  const tips=[];
+  const su=S.history.length?S.history[S.history.length-1].situps||0:0;
+  const pu=S.history.length?S.history[S.history.length-1].pushups||0:0;
+  const sq=S.history.length?S.history[S.history.length-1].squats||0:0;
+  const suNeeded=Math.ceil(xpNeeded/1);
+  const puNeeded=Math.ceil(xpNeeded/1.2);
+  const sqNeeded=Math.ceil(xpNeeded/1.5);
+  const kmNeeded=(xpNeeded/20).toFixed(1);
+  tips.push(`<div class="tip-card"><span class="tip-icon">⚡</span>You need <strong style="color:#fff">${xpNeeded.toLocaleString()} XP</strong> to reach Level ${next}.</div>`);
+  tips.push(`<div class="tip-card"><span class="tip-icon">💪</span>Do <strong style="color:#fff">${suNeeded} sit-ups</strong> to gain enough XP for Level ${next}.</div>`);
+  tips.push(`<div class="tip-card"><span class="tip-icon">💪</span>Do <strong style="color:#fff">${puNeeded} push-ups</strong> to reach Level ${next}.</div>`);
+  tips.push(`<div class="tip-card"><span class="tip-icon">💪</span>Complete <strong style="color:#fff">${sqNeeded} squats</strong> to level up.</div>`);
+  tips.push(`<div class="tip-card"><span class="tip-icon">🏃</span>Run <strong style="color:#fff">${kmNeeded} km</strong> at sprint pace to reach Level ${next}.</div>`);
+  if(!S.lastSleep||S.lastSleep<7)tips.push(`<div class="tip-card"><span class="tip-icon">😴</span>Log <strong style="color:#fff">8 hours of sleep</strong> for maximum VIT XP and recovery bonus.</div>`);
+  if(S.history.length>=3){
+    const avg7=S.history.slice(-7).reduce((a,h)=>a+(h.situps||0),0)/Math.min(7,S.history.length);
+    if(avg7<50)tips.push(`<div class="tip-card"><span class="tip-icon">📈</span>Your average sit-ups are <strong style="color:#fff">${Math.round(avg7)}/session</strong>. Try hitting 50+ for faster STR gains.</div>`);
+  }
+  document.getElementById('tipsContainer').innerHTML=tips.join('');
+}
+
+updateUI();
+</script>
+</body>
+</html>
