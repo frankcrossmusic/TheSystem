@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Solo Leveling Workout</title>
+<title>The System</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -12,7 +12,6 @@ body{background:#050d1a;color:#a8d8f0;font-family:'Segoe UI',sans-serif;min-heig
 .scanline{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,212,255,0.01) 2px,rgba(0,212,255,0.01) 4px);z-index:0}
 .app{position:relative;z-index:1;max-width:480px;margin:0 auto;padding:0 0 80px}
 .header{text-align:center;padding:20px 16px 8px;border-bottom:1px solid var(--border)}
-.header h1{font-size:11px;letter-spacing:6px;color:var(--text2);text-transform:uppercase;margin-bottom:4px}
 .header .player-name{font-size:22px;font-weight:700;color:var(--cyan);text-shadow:0 0 20px rgba(0,212,255,0.4);letter-spacing:2px}
 .nav{display:flex;background:var(--panel);border-bottom:1px solid var(--border)}
 .nav button{flex:1;padding:12px 4px;background:none;border:none;color:var(--text2);font-size:10px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
@@ -39,15 +38,14 @@ body{background:#050d1a;color:#a8d8f0;font-family:'Segoe UI',sans-serif;min-heig
 .form-group{margin-bottom:12px}
 .form-label{font-size:10px;letter-spacing:2px;color:var(--text2);text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between}
 .form-row{display:flex;gap:8px;align-items:center}
-input[type=number]{background:var(--panel2);border:1px solid var(--border);color:#fff;padding:8px 10px;border-radius:4px;font-size:14px;width:100%;outline:none;transition:border .2s}
-input[type=number]:focus{border-color:var(--cyan)}
+input[type=number],input[type=date],input[type=time]{background:var(--panel2);border:1px solid var(--border);color:#fff;padding:8px 10px;border-radius:4px;font-size:14px;width:100%;outline:none;transition:border .2s;color-scheme:dark}
+input[type=number]:focus,input[type=date]:focus,input[type=time]:focus{border-color:var(--cyan)}
 input[type=checkbox]{width:16px;height:16px;accent-color:var(--cyan)}
 .toggle-wrap{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2)}
 select{background:var(--panel2);border:1px solid var(--border);color:#fff;padding:8px 10px;border-radius:4px;font-size:13px;outline:none}
 .btn-primary{width:100%;padding:13px;background:rgba(0,212,255,0.15);border:1px solid var(--cyan);color:var(--cyan);font-size:12px;letter-spacing:3px;text-transform:uppercase;border-radius:4px;cursor:pointer;transition:all .2s;font-weight:600}
 .btn-primary:hover{background:rgba(0,212,255,0.25)}
 .btn-primary:active{transform:scale(.98)}
-.pace-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:2px;font-size:11px;border:1px solid;margin-left:8px}
 .tip-card{background:rgba(0,212,255,0.05);border:1px solid rgba(0,212,255,0.2);border-radius:4px;padding:10px 12px;margin-bottom:8px;font-size:12px;line-height:1.5}
 .tip-card .tip-icon{color:var(--cyan);margin-right:6px}
 .xp-gain{display:none;background:rgba(0,255,136,0.1);border:1px solid var(--green);border-radius:4px;padding:12px;text-align:center;margin-bottom:12px}
@@ -68,8 +66,6 @@ select{background:var(--panel2);border:1px solid var(--border);color:#fff;paddin
 .sleep-quality{display:flex;gap:4px;margin-top:6px}
 .sq-block{flex:1;height:6px;border-radius:1px;background:var(--border)}
 .sq-block.filled{background:var(--cyan)}
-.section-divider{font-size:9px;letter-spacing:3px;color:var(--text2);text-transform:uppercase;margin:16px 0 10px;display:flex;align-items:center;gap:8px}
-.section-divider::after{content:'';flex:1;height:1px;background:var(--border)}
 .feel-btn{flex:1;padding:7px 4px;background:var(--panel2);border:1px solid var(--border);color:var(--text2);font-size:10px;text-transform:uppercase;letter-spacing:1px;border-radius:4px;cursor:pointer;text-align:center;transition:all .2s}
 .feel-btn.active{border-color:var(--cyan);color:var(--cyan);background:rgba(0,212,255,0.1)}
 .level-up-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:100;align-items:center;justify-content:center;flex-direction:column;text-align:center}
@@ -83,14 +79,19 @@ select{background:var(--panel2);border:1px solid var(--border);color:#fff;paddin
 .dot{width:8px;height:8px;border-radius:50%;background:var(--border)}
 .dot.filled{background:var(--cyan)}
 .dot.today{background:var(--gold)}
+#driveBtn{position:fixed;top:12px;right:12px;z-index:99;background:rgba(0,212,255,0.15);border:1px solid var(--cyan);color:var(--cyan);font-size:10px;letter-spacing:2px;padding:6px 12px;border-radius:4px;cursor:pointer;text-transform:uppercase}
+#driveStatus{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--panel);border:1px solid var(--border);font-size:10px;letter-spacing:2px;padding:6px 14px;border-radius:4px;z-index:50;text-transform:uppercase;pointer-events:none;transition:opacity .5s;opacity:0}
 </style>
 </head>
 <body>
 <div class="scanline"></div>
+<button id="driveBtn" onclick="signIn()">Sign in to Drive</button>
+<div id="driveStatus"></div>
+
 <div class="app">
 <div class="header">
-  <div class="player-name" id="playerName">HUNTER</div>
-  <div style="font-size:10px;letter-spacing:3px;color:var(--text2);margin-top:2px">SYSTEM — WORKOUT INTERFACE</div>
+  <div class="player-name">HUNTER</div>
+  <div style="font-size:10px;letter-spacing:3px;color:var(--text2);margin-top:2px">THE SYSTEM</div>
 </div>
 <nav class="nav">
   <button class="active" onclick="showTab('status')">Status</button>
@@ -187,11 +188,11 @@ select{background:var(--panel2);border:1px solid var(--border);color:#fff;paddin
     <div class="panel-title">Backdate This Workout? <span style="font-size:9px;color:var(--text2)">(optional)</span></div>
     <div class="form-group">
       <div class="form-label">Date</div>
-      <input type="date" id="backdateDate" style="background:var(--panel2);border:1px solid var(--border);color:#fff;padding:8px 10px;border-radius:4px;font-size:14px;width:100%;outline:none">
+      <input type="date" id="backdateDate">
     </div>
     <div class="form-group">
       <div class="form-label">Time</div>
-      <input type="time" id="backdateTime" style="background:var(--panel2);border:1px solid var(--border);color:#fff;padding:8px 10px;border-radius:4px;font-size:14px;width:100%;outline:none">
+      <input type="time" id="backdateTime">
     </div>
   </div>
   <div class="panel">
@@ -240,7 +241,6 @@ select{background:var(--panel2);border:1px solid var(--border);color:#fff;paddin
     <div class="panel-title">All-Time Records</div>
     <div id="recordsDisplay" style="font-size:12px;line-height:2;color:var(--text2)">No workouts logged yet.</div>
   </div>
-  <div id="historyList"></div>
 </div>
 
 <div id="tab-tips" class="tab">
@@ -273,18 +273,8 @@ select{background:var(--panel2);border:1px solid var(--border);color:#fff;paddin
 </div>
 
 <script>
-const TITLES=[
-  [1,'Novice Hunter'],[5,'Iron Hunter'],[10,'Bronze Warrior'],[15,'Silver Blade'],
-  [20,'Gold Sentinel'],[30,'Platinum Guardian'],[40,'Diamond Phantom'],
-  [50,'Shadow Monarch'],[75,'Void Walker'],[100,'Absolute Hunter'],[150,'God of Hunters']
-];
-function getTitle(lv){let t=TITLES[0];for(let[l,n]of TITLES){if(lv>=l)t=[l,n];}return t[1];}
-function xpForLevel(lv){return Math.round(100*Math.pow(lv,1.8));}
-function totalXpForLevel(lv){let t=0;for(let i=1;i<lv;i++)t+=xpForLevel(i);return t;}
-function levelFromXP(xp){let lv=1;while(xp>=totalXpForLevel(lv+1))lv++;return lv;}
-
 const CLIENT_ID='1048152252437-h1n207mqhgo4encqk1meo6a855t2uttq.apps.googleusercontent.com';
-const SCOPES='https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/drive.file';
+const SCOPES='https://www.googleapis.com/auth/drive.file';
 const FILE_NAME='solo_leveling_workout_save.json';
 const DEFAULT_STATE={xp:0,level:1,strXP:0,agiXP:0,endXP:0,vitXP:0,history:[],weights:[],feel:'strong',lastSleep:null};
 let S={...DEFAULT_STATE};
@@ -293,25 +283,19 @@ let accessToken=null;
 let savePending=false;
 
 function showDriveStatus(msg,color='var(--cyan)'){
-  let el=document.getElementById('driveStatus');
-  if(!el){el=document.createElement('div');el.id='driveStatus';el.style.cssText='position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--panel);border:1px solid var(--border);color:var(--cyan);font-size:10px;letter-spacing:2px;padding:6px 14px;border-radius:4px;z-index:50;text-transform:uppercase;pointer-events:none;transition:opacity .5s';document.body.appendChild(el);}
+  const el=document.getElementById('driveStatus');
   el.style.color=color;el.textContent=msg;el.style.opacity='1';
   clearTimeout(el._t);el._t=setTimeout(()=>{el.style.opacity='0';},3000);
 }
 
-function renderSignInBtn(show){
-  let btn=document.getElementById('driveSignInBtn');
-  if(!btn){
-    btn=document.createElement('button');btn.id='driveSignInBtn';
-    btn.style.cssText='position:fixed;top:12px;right:12px;z-index:99;background:rgba(0,212,255,0.15);border:1px solid var(--cyan);color:var(--cyan);font-size:10px;letter-spacing:2px;padding:6px 12px;border-radius:4px;cursor:pointer;text-transform:uppercase';
-    btn.onclick=signIn;document.body.appendChild(btn);
-  }
-  btn.style.display=show?'block':'none';
-  btn.textContent=show?'Sign in to Drive':'✓ Drive';
-}
-
 function signIn(){
-  const params=new URLSearchParams({client_id:CLIENT_ID,redirect_uri:location.origin+location.pathname,response_type:'token',scope:SCOPES,prompt:'consent'});
+  const params=new URLSearchParams({
+    client_id:CLIENT_ID,
+    redirect_uri:location.origin+location.pathname,
+    response_type:'token',
+    scope:SCOPES,
+    prompt:'consent'
+  });
   location.href='https://accounts.google.com/o/oauth2/v2/auth?'+params;
 }
 
@@ -323,133 +307,74 @@ function parseTokenFromHash(){
 }
 
 async function findOrCreateFile(){
-  const searchRes=await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${FILE_NAME}' and trashed=false&spaces=drive&fields=files(id,name)`,{headers:{Authorization:'Bearer '+accessToken}});
+  const searchRes=await fetch(
+    `https://www.googleapis.com/drive/v3/files?q=name='${FILE_NAME}' and trashed=false&fields=files(id,name)`,
+    {headers:{Authorization:'Bearer '+accessToken}}
+  );
   const searchData=await searchRes.json();
-  if(searchData.files&&searchData.files.length>0){driveFileId=searchData.files[0].id;return;}
-  const meta={name:FILE_NAME,parents:[]};
+  if(searchData.files&&searchData.files.length>0){
+    driveFileId=searchData.files[0].id;return;
+  }
   const form=new FormData();
-  form.append('metadata',new Blob([JSON.stringify(meta)],{type:'application/json'}));
+  form.append('metadata',new Blob([JSON.stringify({name:FILE_NAME})],{type:'application/json'}));
   form.append('file',new Blob([JSON.stringify(DEFAULT_STATE)],{type:'application/json'}));
-  const createRes=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{method:'POST',headers:{Authorization:'Bearer '+accessToken},body:form});
-  const createData=await createRes.json();
-  driveFileId=createData.id;
+  const res=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',
+    {method:'POST',headers:{Authorization:'Bearer '+accessToken},body:form});
+  const d=await res.json();
+  driveFileId=d.id;
 }
 
 async function loadFromDrive(){
-  if(!accessToken)return;
   showDriveStatus('⟳ Loading from Drive...');
   try{
     await findOrCreateFile();
-    const res=await fetch(`https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`,{headers:{Authorization:'Bearer '+accessToken}});
+    const res=await fetch(`https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`,
+      {headers:{Authorization:'Bearer '+accessToken}});
     const data=await res.json();
     S={...DEFAULT_STATE,...data};
     try{localStorage.setItem('slw_v2',JSON.stringify(S));}catch(e){}
     updateUI();
     showDriveStatus('✓ Drive synced');
-    renderSignInBtn(false);
+    document.getElementById('driveBtn').textContent='✓ Drive';
+    document.getElementById('driveBtn').style.borderColor='var(--green)';
+    document.getElementById('driveBtn').style.color='var(--green)';
+    document.getElementById('driveBtn').onclick=null;
   }catch(e){showDriveStatus('Drive load failed','var(--red)');console.error(e);}
 }
 
 async function saveToDrive(){
   if(!accessToken||!driveFileId)return;
-  const res=await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`,{method:'PATCH',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:JSON.stringify(S)});
-  if(!res.ok)throw new Error('Drive save failed');
+  await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`,
+    {method:'PATCH',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:JSON.stringify(S)});
 }
 
 async function saveState(){
   try{localStorage.setItem('slw_v2',JSON.stringify(S));}catch(e){}
-  if(!accessToken){showDriveStatus('Saved locally only','var(--text2)');return;}
+  if(!accessToken){showDriveStatus('Saved locally','var(--text2)');return;}
   if(savePending)return;
   savePending=true;
-  showDriveStatus('⟳ Saving to Drive...');
+  showDriveStatus('⟳ Saving...');
   try{await saveToDrive();showDriveStatus('✓ Saved to Drive');}
-  catch(e){showDriveStatus('Drive save failed','var(--red)');console.error(e);}
+  catch(e){showDriveStatus('Save failed','var(--red)');}
   savePending=false;
 }
 
-function loadState(){
+function loadLocalState(){
   const def={...DEFAULT_STATE};
   try{const raw=localStorage.getItem('slw_v2');if(raw)return{...def,...JSON.parse(raw)};}catch(e){}
   return def;
 }
 
-S=loadState();
-if(parseTokenFromHash()){
-  loadFromDrive();
-}else{
-  renderSignInBtn(true);
-}
-
-let chart=null;
+const TITLES=[
+  [1,'Novice Hunter'],[5,'Iron Hunter'],[10,'Bronze Warrior'],[15,'Silver Blade'],
+  [20,'Gold Sentinel'],[30,'Platinum Guardian'],[40,'Diamond Phantom'],
+  [50,'Shadow Monarch'],[75,'Void Walker'],[100,'Absolute Hunter'],[150,'God of Hunters']
+];
+function getTitle(lv){let t=TITLES[0];for(let[l,n]of TITLES){if(lv>=l)t=[l,n];}return t[1];}
+function xpForLevel(lv){return Math.round(100*Math.pow(lv,1.8));}
+function totalXpForLevel(lv){let t=0;for(let i=1;i<lv;i++)t+=xpForLevel(i);return t;}
+function levelFromXP(xp){let lv=1;while(xp>=totalXpForLevel(lv+1))lv++;return lv;}
 function statLevel(xp){return Math.max(1,Math.floor(Math.pow(xp/50,0.6))+1);}
-
-function updateUI(){
-  const lv=levelFromXP(S.xp);
-  S.level=lv;
-  const curLvXP=totalXpForLevel(lv);
-  const nextLvXP=totalXpForLevel(lv+1);
-  const pct=Math.min(100,Math.round((S.xp-curLvXP)/(nextLvXP-curLvXP)*100));
-  document.getElementById('levelNum').textContent=lv;
-  document.getElementById('titleBadge').textContent=getTitle(lv);
-  document.getElementById('xpBar').style.width=pct+'%';
-  document.getElementById('xpCurrent').textContent=S.xp.toLocaleString()+' XP total';
-  document.getElementById('xpNext').textContent=(nextLvXP-S.xp).toLocaleString()+' XP to Lv '+(lv+1);
-  const sLv=statLevel(S.strXP),aLv=statLevel(S.agiXP),eLv=statLevel(S.endXP),vLv=statLevel(S.vitXP);
-  document.getElementById('strVal').textContent=sLv;document.getElementById('strLv').textContent=sLv;
-  document.getElementById('agiVal').textContent=aLv;document.getElementById('agiLv').textContent=aLv;
-  document.getElementById('endVal').textContent=eLv;document.getElementById('endLv').textContent=eLv;
-  document.getElementById('vitVal').textContent=vLv;document.getElementById('vitLv').textContent=vLv;
-  updateWeightDisplay();
-  updateSleepDisplay();
-  updateStreak();
-  updateRecords();
-  generateTips();
-}
-
-function updateWeightDisplay(){
-  if(!S.weights||S.weights.length===0){document.getElementById('weightDisplay').textContent='—';return;}
-  const w=S.weights;
-  const last=w[w.length-1];
-  document.getElementById('weightDisplay').textContent=last.val+' '+last.unit;
-  let trend='';
-  if(w.length>=2){
-    const diff=last.val-w[w.length-2].val;
-    if(Math.abs(diff)<0.5){trend='<span class="trend-stable">→ Stable</span>';}
-    else if(diff>0){trend='<span class="trend-up">↑ +'+Math.abs(diff).toFixed(1)+'</span>';}
-    else{trend='<span class="trend-down">↓ -'+Math.abs(diff).toFixed(1)+'</span>';}
-  }
-  document.getElementById('weightTrend').innerHTML=trend;
-  const recent7=S.history.slice(-7).filter(h=>h.situps>0||h.pushups>0||h.squats>0||h.distance>0).length;
-  const sync=recent7>=5?'High Activity':recent7>=3?'Moderate':'Low Activity';
-  document.getElementById('activitySync').textContent=sync;
-}
-
-function updateSleepDisplay(){
-  if(!S.lastSleep){document.getElementById('sleepDisplay').textContent='—';document.getElementById('sleepBlocks').innerHTML='';return;}
-  const h=S.lastSleep;
-  document.getElementById('sleepDisplay').textContent=h+'h last night';
-  const quality=getSleepQuality(h);
-  document.getElementById('sleepLabel').textContent=quality.label;
-  document.getElementById('sleepXpInfo').textContent=quality.pct+'% XP efficiency';
-  const blocks=document.getElementById('sleepBlocks');
-  blocks.innerHTML='';
-  const filled=Math.round((quality.pct/100)*10);
-  for(let i=0;i<10;i++){const d=document.createElement('div');d.className='sq-block'+(i<filled?' filled':'');blocks.appendChild(d);}
-}
-
-function updateStreak(){
-  const dots=document.getElementById('streakDots');dots.innerHTML='';
-  const days=7;
-  const today=new Date().toDateString();
-  for(let i=days-1;i>=0;i--){
-    const d=new Date();d.setDate(d.getDate()-i);
-    const ds=d.toDateString();
-    const logged=S.history.some(h=>h.date===ds);
-    const el=document.createElement('div');
-    el.className='dot'+(logged?ds===today?' today':' filled':'');
-    dots.appendChild(el);
-  }
-}
 
 function getSleepQuality(h){
   if(h<=4)return{pct:10,label:'Critical rest deficit'};
@@ -463,32 +388,117 @@ function getSleepQuality(h){
   return{pct:55,label:'Oversleeping detected'};
 }
 
-function weightXPBonus(feel,weights,history){
-  if(!weights||weights.length<2)return 0;
-  const recent=history.slice(-7).filter(h=>h.situps>0||h.pushups>0||h.squats>0||h.distance>0).length;
-  const last=weights[weights.length-1].val;
-  const prev=weights[weights.length-2].val;
-  const diff=last-prev;
-  if(recent>=4){
-    if(feel==='strong')return 30;
-    if(feel==='normal')return 20;
-    return 10;
+function updateUI(){
+  const lv=levelFromXP(S.xp);S.level=lv;
+  const curLvXP=totalXpForLevel(lv),nextLvXP=totalXpForLevel(lv+1);
+  const pct=Math.min(100,Math.round((S.xp-curLvXP)/(nextLvXP-curLvXP)*100));
+  document.getElementById('levelNum').textContent=lv;
+  document.getElementById('titleBadge').textContent=getTitle(lv);
+  document.getElementById('xpBar').style.width=pct+'%';
+  document.getElementById('xpCurrent').textContent=S.xp.toLocaleString()+' XP total';
+  document.getElementById('xpNext').textContent=(nextLvXP-S.xp).toLocaleString()+' XP to Lv '+(lv+1);
+  const sLv=statLevel(S.strXP),aLv=statLevel(S.agiXP),eLv=statLevel(S.endXP),vLv=statLevel(S.vitXP);
+  document.getElementById('strVal').textContent=sLv;document.getElementById('strLv').textContent=sLv;
+  document.getElementById('agiVal').textContent=aLv;document.getElementById('agiLv').textContent=aLv;
+  document.getElementById('endVal').textContent=eLv;document.getElementById('endLv').textContent=eLv;
+  document.getElementById('vitVal').textContent=vLv;document.getElementById('vitLv').textContent=vLv;
+  updateWeightDisplay();updateSleepDisplay();updateStreak();updateRecords();generateTips();
+}
+
+function updateWeightDisplay(){
+  if(!S.weights||!S.weights.length){document.getElementById('weightDisplay').textContent='—';return;}
+  const w=S.weights,last=w[w.length-1];
+  document.getElementById('weightDisplay').textContent=last.val+' '+last.unit;
+  let trend='';
+  if(w.length>=2){
+    const diff=last.val-w[w.length-2].val;
+    if(Math.abs(diff)<0.5)trend='<span class="trend-stable">→ Stable</span>';
+    else if(diff>0)trend='<span class="trend-up">↑ +'+Math.abs(diff).toFixed(1)+'</span>';
+    else trend='<span class="trend-down">↓ -'+Math.abs(diff).toFixed(1)+'</span>';
   }
-  if(recent<=1&&diff>1)return -10;
-  return 5;
+  document.getElementById('weightTrend').innerHTML=trend;
+  const recent7=S.history.slice(-7).filter(h=>h.situps>0||h.pushups>0||h.squats>0||h.distance>0).length;
+  document.getElementById('activitySync').textContent=recent7>=5?'High Activity':recent7>=3?'Moderate':'Low Activity';
+}
+
+function updateSleepDisplay(){
+  if(!S.lastSleep){document.getElementById('sleepDisplay').textContent='—';document.getElementById('sleepBlocks').innerHTML='';return;}
+  const h=S.lastSleep,quality=getSleepQuality(h);
+  document.getElementById('sleepDisplay').textContent=h+'h last night';
+  document.getElementById('sleepLabel').textContent=quality.label;
+  document.getElementById('sleepXpInfo').textContent=quality.pct+'% XP efficiency';
+  const blocks=document.getElementById('sleepBlocks');blocks.innerHTML='';
+  const filled=Math.round((quality.pct/100)*10);
+  for(let i=0;i<10;i++){const d=document.createElement('div');d.className='sq-block'+(i<filled?' filled':'');blocks.appendChild(d);}
+}
+
+function updateStreak(){
+  const dots=document.getElementById('streakDots');dots.innerHTML='';
+  const today=new Date().toDateString();
+  for(let i=6;i>=0;i--){
+    const d=new Date();d.setDate(d.getDate()-i);
+    const ds=d.toDateString();
+    const logged=S.history.some(h=>h.date===ds);
+    const el=document.createElement('div');
+    el.className='dot'+(logged?ds===today?' today':' filled':'');
+    dots.appendChild(el);
+  }
+}
+
+function updateRecords(){
+  if(!S.history.length){document.getElementById('recordsDisplay').textContent='No workouts logged yet.';return;}
+  const maxSU=Math.max(...S.history.map(h=>h.situps||0));
+  const maxPU=Math.max(...S.history.map(h=>h.pushups||0));
+  const maxSQ=Math.max(...S.history.map(h=>h.squats||0));
+  const maxD=Math.max(...S.history.map(h=>h.distance||0));
+  const recent=S.history.slice(-10).reverse();
+  const histHTML=recent.map(h=>`<div class="history-item"><div><div style="font-size:12px;color:#fff">${h.date}</div><div class="history-date">${h.time||'--:--'} · ${[h.situps&&h.situps+'su',h.pushups&&h.pushups+'pu',h.squats&&h.squats+'sq',h.distance&&h.distance+h.unit].filter(Boolean).join(' · ')||'recovery'}</div></div><div class="history-xp">+${h.xp} XP</div></div>`).join('');
+  document.getElementById('recordsDisplay').innerHTML=
+    `<div>💪 Best Sit-ups: <span style="color:#fff">${maxSU}</span></div>
+    <div>💪 Best Push-ups: <span style="color:#fff">${maxPU}</span></div>
+    <div>💪 Best Squats: <span style="color:#fff">${maxSQ}</span></div>
+    <div>🏃 Longest Run: <span style="color:#fff">${maxD} km/mi</span></div>
+    <div>⚡ Total Sessions: <span style="color:#fff">${S.history.length}</span></div>
+    <div style="margin-top:12px;font-size:9px;letter-spacing:3px;color:var(--text2);text-transform:uppercase;margin-bottom:8px">Recent Sessions</div>${histHTML}`;
+}
+
+let chart=null;
+function showChart(type,el){
+  document.querySelectorAll('.chart-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  const labels=S.history.map(h=>h.date.slice(4,10));
+  let data,label,color;
+  if(type==='combined'){data=S.history.map(h=>h.xp);label='Total XP';color='#00d4ff';document.getElementById('chartTitle').textContent='Total XP Per Session';}
+  else if(type==='situps'){data=S.history.map(h=>h.situps||0);label='Sit-ups';color='#f0c040';document.getElementById('chartTitle').textContent='Sit-ups Over Time';}
+  else if(type==='pushups'){data=S.history.map(h=>h.pushups||0);label='Push-ups';color='#00ff88';document.getElementById('chartTitle').textContent='Push-ups Over Time';}
+  else if(type==='squats'){data=S.history.map(h=>h.squats||0);label='Squats';color='#ff8844';document.getElementById('chartTitle').textContent='Squats Over Time';}
+  else if(type==='run'){data=S.history.map(h=>h.distance||0);label='Distance';color='#aa88ff';document.getElementById('chartTitle').textContent='Distance Run Over Time';}
+  else if(type==='sleep'){data=S.history.map(h=>h.sleep||0);label='Sleep (h)';color='#4488ff';document.getElementById('chartTitle').textContent='Sleep Hours Over Time';}
+  else if(type==='weight'){data=S.history.map(h=>h.weight||null);label='Weight';color='#ff6699';document.getElementById('chartTitle').textContent='Weight Over Time';}
+  if(chart)chart.destroy();
+  const ctx=document.getElementById('mainChart').getContext('2d');
+  chart=new Chart(ctx,{type:'line',data:{labels:labels.length?labels:['No data'],datasets:[{label,data:data.length?data:[0],borderColor:color,backgroundColor:color+'22',borderWidth:2,pointRadius:3,pointBackgroundColor:color,tension:.3,fill:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#5a8fa8',font:{size:10},maxRotation:45},grid:{color:'rgba(0,212,255,0.05)'}},y:{ticks:{color:'#5a8fa8',font:{size:10}},grid:{color:'rgba(0,212,255,0.05)'}}}}});
+}
+
+function generateTips(){
+  const lv=S.level,next=lv+1;
+  const xpNeeded=totalXpForLevel(next)-S.xp;
+  const tips=[];
+  tips.push(`<div class="tip-card"><span class="tip-icon">⚡</span>You need <strong style="color:#fff">${xpNeeded.toLocaleString()} XP</strong> to reach Level ${next}.</div>`);
+  tips.push(`<div class="tip-card"><span class="tip-icon">💪</span>Do <strong style="color:#fff">${Math.ceil(xpNeeded)} sit-ups</strong> to reach Level ${next}.</div>`);
+  tips.push(`<div class="tip-card"><span class="tip-icon">💪</span>Do <strong style="color:#fff">${Math.ceil(xpNeeded/1.2)} push-ups</strong> to reach Level ${next}.</div>`);
+  tips.push(`<div class="tip-card"><span class="tip-icon">💪</span>Complete <strong style="color:#fff">${Math.ceil(xpNeeded/1.5)} squats</strong> to level up.</div>`);
+  tips.push(`<div class="tip-card"><span class="tip-icon">🏃</span>Run <strong style="color:#fff">${(xpNeeded/20).toFixed(1)} km</strong> at sprint pace to reach Level ${next}.</div>`);
+  if(!S.lastSleep||S.lastSleep<7)tips.push(`<div class="tip-card"><span class="tip-icon">😴</span>Log <strong style="color:#fff">8 hours of sleep</strong> for maximum VIT XP.</div>`);
+  document.getElementById('tipsContainer').innerHTML=tips.join('');
 }
 
 let feelVal='strong';
-function setFeel(el){
-  document.querySelectorAll('.feel-btn').forEach(b=>b.classList.remove('active'));
-  el.classList.add('active');feelVal=el.dataset.val;
-}
+function setFeel(el){document.querySelectorAll('.feel-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');feelVal=el.dataset.val;}
 
 ['suWeighted','puWeighted','sqWeighted'].forEach(id=>{
   const map={suWeighted:'suWeight',puWeighted:'puWeight',sqWeighted:'sqWeight'};
-  document.getElementById(id).addEventListener('change',function(){
-    document.getElementById(map[id]).style.display=this.checked?'inline-block':'none';
-  });
+  document.getElementById(id).addEventListener('change',function(){document.getElementById(map[id]).style.display=this.checked?'inline-block':'none';});
 });
 
 document.getElementById('distance').addEventListener('input',updatePaceBadge);
@@ -510,6 +520,15 @@ function updatePaceBadge(){
   pb.innerHTML=`<span style="color:${color};font-size:11px">${label} ${mult}</span>`;
 }
 
+function weightXPBonus(feel,weights,history){
+  if(!weights||weights.length<2)return 0;
+  const recent=history.slice(-7).filter(h=>h.situps>0||h.pushups>0||h.squats>0||h.distance>0).length;
+  const diff=weights[weights.length-1].val-weights[weights.length-2].val;
+  if(recent>=4){if(feel==='strong')return 30;if(feel==='normal')return 20;return 10;}
+  if(recent<=1&&diff>1)return -10;
+  return 5;
+}
+
 function logWorkout(){
   const su=parseInt(document.getElementById('situps').value)||0;
   const pu=parseInt(document.getElementById('pushups').value)||0;
@@ -524,66 +543,35 @@ function logWorkout(){
   const puW=document.getElementById('puWeighted').checked?(parseFloat(document.getElementById('puWeight').value)||0):0;
   const sqW=document.getElementById('sqWeighted').checked?(parseFloat(document.getElementById('sqWeight').value)||0):0;
   const km=unit==='mi'?dist*1.609:dist;
-
   let xpGain=0,strXP=0,agiXP=0,endXP=0,vitXP=0;
   const suXP=Math.round(su*(1+suW*0.3));strXP+=suXP;xpGain+=suXP;
   const puXP=Math.round(pu*1.2*(1+puW*0.3));strXP+=puXP;xpGain+=puXP;
   const sqXP=Math.round(sq*1.5*(1+sqW*0.3));strXP+=sqXP;xpGain+=sqXP;
-
   if(km>0){
     let mult=1;
     if(runT>0){const spd=km/(runT/60);if(spd>=12)mult=2;else if(spd>=6)mult=1.4;}
     const runXP=Math.round(km*20*mult);
     agiXP+=Math.round(runXP*0.4);endXP+=Math.round(runXP*0.6);xpGain+=runXP;
   }
-
-  if(sleep>0){
-    const q=getSleepQuality(sleep);
-    const sleepXP=Math.round(50*(q.pct/100));
-    vitXP+=sleepXP;xpGain+=sleepXP;
-    S.lastSleep=sleep;
-  }
-
-  if(wInput>0){
-    S.weights=S.weights||[];
-    S.weights.push({val:wInput,unit:wUnit,date:new Date().toDateString()});
-  }
-
-  const wBonus=weightXPBonus(feelVal,S.weights,S.history);
-  xpGain=Math.max(0,xpGain+wBonus);
-
-  const oldLevel=levelFromXP(S.xp);
-  S.xp+=xpGain;S.strXP+=strXP;S.agiXP+=agiXP;S.endXP+=endXP;S.vitXP+=vitXP;
-  const newLevel=levelFromXP(S.xp);
-
+  if(sleep>0){const q=getSleepQuality(sleep);const sleepXP=Math.round(50*(q.pct/100));vitXP+=sleepXP;xpGain+=sleepXP;S.lastSleep=sleep;}
+  if(wInput>0){S.weights=S.weights||[];S.weights.push({val:wInput,unit:wUnit,date:new Date().toDateString()});}
+  xpGain=Math.max(0,xpGain+weightXPBonus(feelVal,S.weights,S.history));
   const bdDate=document.getElementById('backdateDate').value;
   const bdTime=document.getElementById('backdateTime').value;
   let entryDate,entryTime;
-  if(bdDate){
-    const d=new Date(bdDate+'T'+(bdTime||'12:00'));
-    entryDate=d.toDateString();
-    entryTime=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-  }else{
-    const now=new Date();
-    entryDate=now.toDateString();
-    entryTime=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-  }
+  if(bdDate){const d=new Date(bdDate+'T'+(bdTime||'12:00'));entryDate=d.toDateString();entryTime=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}
+  else{const now=new Date();entryDate=now.toDateString();entryTime=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}
+  const oldLevel=levelFromXP(S.xp);
+  S.xp+=xpGain;S.strXP+=strXP;S.agiXP+=agiXP;S.endXP+=endXP;S.vitXP+=vitXP;
+  const newLevel=levelFromXP(S.xp);
   S.history.push({date:entryDate,time:entryTime,xp:xpGain,situps:su,pushups:pu,squats:sq,distance:dist,unit,sleep,weight:wInput,wUnit,feel:feelVal});
   S.history.sort((a,b)=>new Date(a.date+' '+a.time)-new Date(b.date+' '+b.time));
   saveState();
-
   const box=document.getElementById('xpGainBox');
-  document.getElementById('xpGainNum').textContent='+'+xpGain+' XP'+(wBonus>0?' (w/ body bonus)':wBonus<0?' (activity penalty)':'');
+  document.getElementById('xpGainNum').textContent='+'+xpGain+' XP';
   box.classList.add('show');setTimeout(()=>box.classList.remove('show'),4000);
-
-  if(newLevel>oldLevel){
-    document.getElementById('levelUpNum').textContent=newLevel;
-    document.getElementById('levelUpTitle').textContent=getTitle(newLevel);
-    document.getElementById('levelUpOverlay').classList.add('show');
-  }
-  updateUI();
-  clearForm();
-  showTab('status');
+  if(newLevel>oldLevel){document.getElementById('levelUpNum').textContent=newLevel;document.getElementById('levelUpTitle').textContent=getTitle(newLevel);document.getElementById('levelUpOverlay').classList.add('show');}
+  updateUI();clearForm();showTab('status');
 }
 
 function clearForm(){
@@ -604,85 +592,9 @@ function showTab(name){
   if(name==='stats')setTimeout(()=>showChart('combined',document.querySelector('.chart-tab.active')),50);
 }
 
-function showChart(type,el){
-  document.querySelectorAll('.chart-tab').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
-  const labels=S.history.map(h=>h.date.slice(4,10));
-  let data,label,color;
-  if(type==='combined'){
-    data=S.history.map(h=>h.xp);label='Total XP';color='#00d4ff';
-    document.getElementById('chartTitle').textContent='Total XP Per Session';
-  }else if(type==='situps'){
-    data=S.history.map(h=>h.situps||0);label='Sit-ups';color='#f0c040';
-    document.getElementById('chartTitle').textContent='Sit-ups Over Time';
-  }else if(type==='pushups'){
-    data=S.history.map(h=>h.pushups||0);label='Push-ups';color='#00ff88';
-    document.getElementById('chartTitle').textContent='Push-ups Over Time';
-  }else if(type==='squats'){
-    data=S.history.map(h=>h.squats||0);label='Squats';color='#ff8844';
-    document.getElementById('chartTitle').textContent='Squats Over Time';
-  }else if(type==='run'){
-    data=S.history.map(h=>h.distance||0);label='Distance';color='#aa88ff';
-    document.getElementById('chartTitle').textContent='Distance Run Over Time';
-  }else if(type==='sleep'){
-    data=S.history.map(h=>h.sleep||0);label='Sleep (h)';color='#4488ff';
-    document.getElementById('chartTitle').textContent='Sleep Hours Over Time';
-  }else if(type==='weight'){
-    data=S.history.map(h=>h.weight||null);label='Weight';color='#ff6699';
-    document.getElementById('chartTitle').textContent='Weight Over Time';
-  }
-  if(chart)chart.destroy();
-  const ctx=document.getElementById('mainChart').getContext('2d');
-  chart=new Chart(ctx,{
-    type:'line',
-    data:{labels:labels.length?labels:['No data'],datasets:[{label,data:data.length?data:[0],borderColor:color,backgroundColor:color+'22',borderWidth:2,pointRadius:3,pointBackgroundColor:color,tension:.3,fill:true}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:v=>label+': '+v.parsed.y}}},scales:{x:{ticks:{color:'#5a8fa8',font:{size:10},maxRotation:45},grid:{color:'rgba(0,212,255,0.05)'}},y:{ticks:{color:'#5a8fa8',font:{size:10}},grid:{color:'rgba(0,212,255,0.05)'}}}}
-  });
-}
-
-function updateRecords(){
-  if(!S.history.length){document.getElementById('recordsDisplay').textContent='No workouts logged yet.';return;}
-  const maxSU=Math.max(...S.history.map(h=>h.situps||0));
-  const maxPU=Math.max(...S.history.map(h=>h.pushups||0));
-  const maxSQ=Math.max(...S.history.map(h=>h.squats||0));
-  const maxD=Math.max(...S.history.map(h=>h.distance||0));
-  const recent=S.history.slice(-10).reverse();
-  const histHTML=recent.map(h=>`<div class="history-item"><div><div style="font-size:12px;color:#fff">${h.date}</div><div class="history-date">${h.time||'--:--'} · ${[h.situps&&h.situps+'su',h.pushups&&h.pushups+'pu',h.squats&&h.squats+'sq',h.distance&&h.distance+h.unit].filter(Boolean).join(' · ')||'recovery'}</div></div><div class="history-xp">+${h.xp} XP</div></div>`).join('');
-  document.getElementById('recordsDisplay').innerHTML=
-    `<div>💪 Best Sit-ups: <span style="color:#fff">${maxSU}</span></div>
-    <div>💪 Best Push-ups: <span style="color:#fff">${maxPU}</span></div>
-    <div>💪 Best Squats: <span style="color:#fff">${maxSQ}</span></div>
-    <div>🏃 Longest Run: <span style="color:#fff">${maxD} km/mi</span></div>
-    <div>⚡ Total Sessions: <span style="color:#fff">${S.history.length}</span></div>
-    <div style="margin-top:12px;font-size:9px;letter-spacing:3px;color:var(--text2);text-transform:uppercase;margin-bottom:8px">Recent Sessions</div>${histHTML}`;
-}
-
-function generateTips(){
-  const lv=S.level;
-  const next=lv+1;
-  const xpNeeded=totalXpForLevel(next)-S.xp;
-  const tips=[];
-  const su=S.history.length?S.history[S.history.length-1].situps||0:0;
-  const pu=S.history.length?S.history[S.history.length-1].pushups||0:0;
-  const sq=S.history.length?S.history[S.history.length-1].squats||0:0;
-  const suNeeded=Math.ceil(xpNeeded/1);
-  const puNeeded=Math.ceil(xpNeeded/1.2);
-  const sqNeeded=Math.ceil(xpNeeded/1.5);
-  const kmNeeded=(xpNeeded/20).toFixed(1);
-  tips.push(`<div class="tip-card"><span class="tip-icon">⚡</span>You need <strong style="color:#fff">${xpNeeded.toLocaleString()} XP</strong> to reach Level ${next}.</div>`);
-  tips.push(`<div class="tip-card"><span class="tip-icon">💪</span>Do <strong style="color:#fff">${suNeeded} sit-ups</strong> to gain enough XP for Level ${next}.</div>`);
-  tips.push(`<div class="tip-card"><span class="tip-icon">💪</span>Do <strong style="color:#fff">${puNeeded} push-ups</strong> to reach Level ${next}.</div>`);
-  tips.push(`<div class="tip-card"><span class="tip-icon">💪</span>Complete <strong style="color:#fff">${sqNeeded} squats</strong> to level up.</div>`);
-  tips.push(`<div class="tip-card"><span class="tip-icon">🏃</span>Run <strong style="color:#fff">${kmNeeded} km</strong> at sprint pace to reach Level ${next}.</div>`);
-  if(!S.lastSleep||S.lastSleep<7)tips.push(`<div class="tip-card"><span class="tip-icon">😴</span>Log <strong style="color:#fff">8 hours of sleep</strong> for maximum VIT XP and recovery bonus.</div>`);
-  if(S.history.length>=3){
-    const avg7=S.history.slice(-7).reduce((a,h)=>a+(h.situps||0),0)/Math.min(7,S.history.length);
-    if(avg7<50)tips.push(`<div class="tip-card"><span class="tip-icon">📈</span>Your average sit-ups are <strong style="color:#fff">${Math.round(avg7)}/session</strong>. Try hitting 50+ for faster STR gains.</div>`);
-  }
-  document.getElementById('tipsContainer').innerHTML=tips.join('');
-}
-
+S=loadLocalState();
 updateUI();
+if(parseTokenFromHash()){loadFromDrive();}
 </script>
 </body>
 </html>
