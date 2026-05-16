@@ -798,30 +798,160 @@ function buildGuidance(){
 function checkRecap(){var n=S.history.length;document.getElementById('recapBtnWrap').style.display=(n>0&&n%6===0)?'block':'none';}
 function showRecap(){
   var h=S.history.slice(-6),p=S.profile||{},cards=[];
-  var suMax=Math.max.apply(null,[0].concat(h.map(function(e){return e.situps||0;})));
-  var puMax=Math.max.apply(null,[0].concat(h.map(function(e){return e.pushups||0;})));
-  var sqMax=Math.max.apply(null,[0].concat(h.map(function(e){return e.squats||0;})));
-  var daysLogged=new Set(h.map(function(e){return e.date;})).size;
-  var sleepArr=h.filter(function(e){return e.sleep;});
-  var avgSleep=sleepArr.length?(sleepArr.reduce(function(a,e){return a+e.sleep;},0)/sleepArr.length).toFixed(1):'0';
-  var xpTotal=h.reduce(function(a,e){return a+e.xp;},0);
+  var age=p.age||25,gender=p.gender||'',hCm=p.heightCm||0,al=p.activityLevel||'active';
+  var wKg=getLatestWeightKg();
+
+  // ── Raw stats ──
+  var suArr=h.filter(function(e){return e.situps!=null;});
+  var puArr=h.filter(function(e){return e.pushups!=null;});
+  var sqArr=h.filter(function(e){return e.squats!=null;});
+  var runArr=h.filter(function(e){return e.distance!=null;});
+  var sleepArr=h.filter(function(e){return e.sleep!=null;});
   var protArr=h.filter(function(e){return e.protein!=null;});
+
+  var suAvg=suArr.length?Math.round(suArr.reduce(function(a,e){return a+e.situps;},0)/suArr.length):0;
+  var puAvg=puArr.length?Math.round(puArr.reduce(function(a,e){return a+e.pushups;},0)/puArr.length):0;
+  var sqAvg=sqArr.length?Math.round(sqArr.reduce(function(a,e){return a+e.squats;},0)/sqArr.length):0;
+  var suMax=suArr.length?Math.max.apply(null,suArr.map(function(e){return e.situps;})):0;
+  var puMax=puArr.length?Math.max.apply(null,puArr.map(function(e){return e.pushups;})):0;
+  var sqMax=sqArr.length?Math.max.apply(null,sqArr.map(function(e){return e.squats;})):0;
+  var runAvgKm=runArr.length?(runArr.reduce(function(a,e){return a+(e.unit==='mi'?e.distance*1.609:e.distance);},0)/runArr.length).toFixed(2):0;
+  var avgSleep=sleepArr.length?(sleepArr.reduce(function(a,e){return a+e.sleep;},0)/sleepArr.length).toFixed(1):0;
   var proteinAvg=protArr.length?Math.round(protArr.reduce(function(a,e){return a+e.protein;},0)/protArr.length):0;
-  var achHTML=(suMax>0?'Best sit-ups: <strong>'+suMax+'</strong><br>':'')+(puMax>0?'Best push-ups: <strong>'+puMax+'</strong><br>':'')+(sqMax>0?'Best squats: <strong>'+sqMax+'</strong><br>':'')+'Sessions: <strong>'+daysLogged+'/6</strong> · XP: <strong style="color:var(--cyan)">'+xpTotal+'</strong>';
-  cards.push('<div class="recap-card recap-achievement">🏆 <strong style="color:var(--green)">Achievements</strong><br>'+achHTML+'</div>');
+  var daysLogged=new Set(h.map(function(e){return e.date;})).size;
+  var xpTotal=h.reduce(function(a,e){return a+e.xp;},0);
+
+  // Trends (first vs last)
+  var suTrend=suArr.length>=2?suArr[suArr.length-1].situps-suArr[0].situps:null;
+  var puTrend=puArr.length>=2?puArr[puArr.length-1].pushups-puArr[0].pushups:null;
+  var sqTrend=sqArr.length>=2?sqArr[sqArr.length-1].squats-sqArr[0].squats:null;
+
+  var proteinGoal=wKg>0?getProteinGoal(wKg,hCm,age,al,true):0;
+  var proteinDeficit=proteinGoal>0&&proteinAvg>0?proteinGoal-proteinAvg:0;
+
+  // ── ACHIEVEMENTS ──
+  var ach=[];
+  if(suMax>0)ach.push('💪 Best sit-up session: <strong style="color:#fff">'+suMax+' reps</strong>'+(suTrend>0?' (up '+suTrend+' from first session this period)':''));
+  if(puMax>0)ach.push('💪 Best push-up session: <strong style="color:#fff">'+puMax+' reps</strong>'+(puTrend>0?' (up '+puTrend+' reps this period)':''));
+  if(sqMax>0)ach.push('🦵 Best squat session: <strong style="color:#fff">'+sqMax+' reps</strong>'+(sqTrend>0?' (up '+sqTrend+' reps)':''));
+  if(parseFloat(runAvgKm)>0)ach.push('🏃 Avg run distance: <strong style="color:#fff">'+runAvgKm+' km</strong>');
+  if(parseFloat(avgSleep)>=8)ach.push('😴 Sleep avg: <strong style="color:#fff">'+avgSleep+'h</strong> — optimal recovery zone');
+  if(proteinAvg>0&&proteinGoal>0&&proteinAvg>=proteinGoal*0.9)ach.push('🥩 Protein avg: <strong style="color:#fff">'+proteinAvg+'g</strong> — hitting your '+proteinGoal+'g goal');
+  ach.push('⚡ Sessions: <strong style="color:#fff">'+daysLogged+'/6</strong> · XP earned: <strong style="color:var(--cyan)">'+xpTotal+'</strong>');
+  cards.push('<div class="recap-card recap-achievement">🏆 <strong style="color:var(--green)">Achievements</strong><br>'+ach.join('<br>')+'</div>');
+
+  // ── AREAS TO IMPROVE ──
   var weak=[];
-  if(parseFloat(avgSleep)<7)weak.push('Sleep avg <strong>'+avgSleep+'h</strong> — under 7h reduces muscle protein synthesis by ~18%.');
-  if(daysLogged<4)weak.push('Only <strong>'+daysLogged+' sessions</strong> — aim for 4–5/week.');
-  var wKg=getLatestWeightKg(),goal=wKg>0?getProteinGoal(wKg,p.heightCm||0,p.age||25,p.activityLevel||'active',false):0;
-  if(proteinAvg>0&&goal>0&&proteinAvg<goal*0.8)weak.push('Protein avg <strong>'+proteinAvg+'g</strong> vs '+goal+'g goal.');
-  if(!h.some(function(e){return e.distance!=null;}))weak.push('No cardio — 2×2km runs/week boosts recovery significantly.');
-  if(weak.length)cards.push('<div class="recap-card recap-weakness">⚠️ <strong style="color:var(--red)">Areas to Improve</strong><br>'+weak.join('<br>')+'</div>');
-  var tips=['Add 1–2 reps per set each week (progressive overload).'];
-  if(parseFloat(avgSleep)<8)tips.push('Sleep 7.5–9h — growth hormone peaks during deep sleep.');
-  if(wKg>0)tips.push('Aim for <strong>'+getProteinGoal(wKg,p.heightCm||0,p.age||25,p.activityLevel||'active',true)+'g protein on workout days</strong>.');
-  if(p.age>=40)tips.push('Over 40: prioritise recovery — muscle repair takes 48–72h.');
-  tips.push('Slow reps to 3s on the way down — builds 23% more muscle than fast reps.');
-  cards.push('<div class="recap-card recap-tip">💡 <strong style="color:var(--cyan)">How to Grow Faster</strong><br>'+tips.join('<br>')+'</div>');
+
+  // Sleep
+  if(parseFloat(avgSleep)>0&&parseFloat(avgSleep)<7){
+    var sleepDebt=(7-parseFloat(avgSleep)).toFixed(1);
+    weak.push('😴 <strong>Sleep deficit: '+avgSleep+'h avg</strong> — you are averaging '+sleepDebt+'h under the 7h minimum. At this level muscle protein synthesis is reduced by ~18%, meaning your '+puAvg+' push-ups and '+sqAvg+' squats are not being fully converted to muscle. Getting to 8h would add an estimated 15–20% to your recovery rate.');
+  } else if(parseFloat(avgSleep)===0){
+    weak.push('😴 <strong>No sleep data logged</strong> — without sleep tracking the system cannot optimise your recovery. You may be losing significant gains.');
+  }
+
+  // Frequency
+  if(daysLogged<4){
+    weak.push('📅 <strong>Only '+daysLogged+' sessions in this period</strong> — muscle hypertrophy requires consistent stimulus. At '+daysLogged+' sessions you are training at '+(Math.round(daysLogged/6*100))+'% of the recommended 4–5×/week frequency. Each missed session delays your next level-up by roughly '+(Math.round(xpTotal/daysLogged))+' XP.');
+  }
+
+  // Protein
+  if(proteinAvg>0&&proteinGoal>0&&proteinDeficit>15){
+    var mealsShort=Math.round(proteinDeficit/30);
+    weak.push('🥩 <strong>Protein: '+proteinAvg+'g avg vs '+proteinGoal+'g goal — deficit of '+proteinDeficit+'g/day</strong>. At this shortfall your muscles are under-fuelled after each session. This is equivalent to missing ~'+mealsShort+' protein-rich meal'+(mealsShort!==1?'s':'')+' per day. Add '+Math.round(proteinDeficit/2)+'g at lunch and '+Math.round(proteinDeficit/2)+'g post-workout to close the gap.');
+  } else if(proteinAvg===0&&wKg>0){
+    weak.push('🥩 <strong>No protein logged in this period</strong> — your body needs '+proteinGoal+'g/day at your weight ('+Math.round(wKg)+'kg) to support muscle growth. Without hitting this target, your '+puAvg+' push-ups are not being fully converted into strength gains.');
+  }
+
+  // Push-up specific weakness
+  if(puAvg>0&&puAvg<20){
+    weak.push('💪 <strong>Push-up avg: '+puAvg+' reps</strong> — this is below the intermediate threshold of 20. Your upper body pushing strength is the current limiter for STR growth. At this level, diamond push-ups or negative push-ups (5s down) 3× per week would accelerate gains faster than adding more reps at current form.');
+  } else if(puAvg>0&&puTrend!==null&&puTrend<0){
+    weak.push('💪 <strong>Push-ups declining: down '+Math.abs(puTrend)+' reps this period</strong> — this suggests fatigue accumulation or insufficient recovery. Consider dropping volume by 20% for one week then reloading, or adding a dedicated rest day between push sessions.');
+  }
+
+  // Sit-up specific
+  if(suAvg>0&&suTrend!==null&&suTrend<0){
+    weak.push('💪 <strong>Sit-ups declining: down '+Math.abs(suTrend)+' reps this period</strong> — declining core endurance often signals insufficient sleep or protein. Your '+avgSleep+'h sleep avg and '+proteinAvg+'g protein avg are likely contributors.');
+  } else if(suAvg>0&&suAvg<30){
+    weak.push('💪 <strong>Sit-up avg: '+suAvg+' reps</strong> — core endurance below 30 reps limits all other exercises. A weak core reduces squat stability and push-up endurance. Add planks (3×30s) on your off days to build a stronger base.');
+  }
+
+  // Squat specific
+  if(sqAvg>0&&sqAvg<25){
+    weak.push('🦵 <strong>Squat avg: '+sqAvg+' reps</strong> — below 25 reps indicates limited lower body endurance. Squats are your highest XP-per-rep exercise (1.5×). Getting from '+sqAvg+' to 40 reps per session would add '+(Math.round((40-sqAvg)*1.5))+' XP per session.');
+  } else if(sqAvg>0&&sqTrend!==null&&sqTrend<0){
+    weak.push('🦵 <strong>Squats declining: down '+Math.abs(sqTrend)+' reps this period</strong> — lower body fatigue or technique breakdown. Try reducing to '+Math.round(sqAvg*0.8)+' reps but slowing to 3s down, 1s hold, 1s up for 2 weeks before reloading.');
+  }
+
+  // No cardio
+  if(runArr.length===0){
+    weak.push('🏃 <strong>Zero cardio logged this period</strong> — endurance (END stat) has not grown at all. Running improves oxygen delivery to muscles, which directly boosts recovery speed between strength sets. Even 2×2km runs per week would add '+(Math.round(2*2*20*2))+' XP and accelerate STR and END growth.');
+  } else if(parseFloat(runAvgKm)>0&&parseFloat(runAvgKm)<2){
+    weak.push('🏃 <strong>Run avg: '+runAvgKm+'km</strong> — short runs are good for a start, but below 2km the cardiovascular stimulus is minimal. Increasing to 3km per run would add '+(Math.round((3-parseFloat(runAvgKm))*20))+' XP per session and meaningfully boost END.');
+  }
+
+  // Imbalance check — push vs sit
+  if(puAvg>0&&suAvg>0){
+    var ratio=puAvg/suAvg;
+    if(ratio>2){weak.push('⚖️ <strong>Muscle imbalance: push-ups ('+puAvg+') are 2× your sit-ups ('+suAvg+')</strong> — over-developed pushing muscles relative to core can cause shoulder impingement over time. Add '+(puAvg-suAvg)+' sit-ups or replace some push-up volume with plank holds to rebalance.');}
+    else if(ratio<0.4){weak.push('⚖️ <strong>Muscle imbalance: sit-ups ('+suAvg+') far exceed push-ups ('+puAvg+')</strong> — your core is strong but upper body pushing is lagging. Prioritise push-ups: target '+(Math.round(suAvg*0.6))+' push-ups per session to bring it in line with your core strength.');}
+  }
+
+  if(weak.length)cards.push('<div class="recap-card recap-weakness">⚠️ <strong style="color:var(--red)">Areas to Improve</strong><br>'+weak.join('<br><br>')+'</div>');
+
+  // ── HOW TO GROW FASTER ──
+  var tips=[];
+
+  // Most impactful next action based on data
+  if(puAvg>0&&puAvg<30){
+    tips.push('🎯 <strong style="color:#fff">Highest impact action:</strong> your push-up avg of '+puAvg+' is your biggest STR limiter. Do 3 sets to failure every other day — if you hit '+Math.round(puAvg*1.1)+' reps in your next session you will be on track for '+Math.round(puAvg*1.3)+' within 3 weeks using progressive overload.');
+  } else if(sqAvg>0){
+    tips.push('🎯 <strong style="color:#fff">Highest impact action:</strong> squats give 1.5× XP — your avg of '+sqAvg+' reps means you should target '+Math.round(sqAvg*1.15)+' next session. Each extra rep is worth 1.5 XP more than a sit-up rep.');
+  }
+
+  // Protein timing
+  if(proteinGoal>0){
+    var postWkP=Math.round(proteinGoal*0.3);
+    tips.push('🥩 <strong style="color:#fff">Protein window:</strong> eat '+postWkP+'g within 30 minutes of finishing your workout (e.g. '+Math.round(postWkP/6)+' eggs or '+Math.round(postWkP/3)+'g of chicken), then spread the remaining '+(proteinGoal-postWkP)+'g across '+(Math.round((proteinGoal-postWkP)/35))+' meals. This timing maximises muscle protein synthesis from your sessions.');
+  }
+
+  // Sleep ROI
+  if(parseFloat(avgSleep)>0&&parseFloat(avgSleep)<8){
+    var sleepGap=(8-parseFloat(avgSleep)).toFixed(1);
+    tips.push('😴 <strong style="color:#fff">Sleep ROI:</strong> adding '+sleepGap+'h per night is the single cheapest performance upgrade available. It costs nothing and will increase your effective recovery from each session by 15–20%, meaning your '+puAvg+' push-ups will produce more muscle than '+Math.round(puAvg*1.2)+' push-ups on bad sleep.');
+  }
+
+  // Age-specific
+  if(age>=50){
+    tips.push('👴 <strong style="color:#fff">Age '+age+' strategy:</strong> at 50+ your muscles need 48–72h to fully repair (vs 24–48h for under-35s). Split your sessions: push on Mon/Thu, legs on Tue/Fri, cardio Wed. This schedule avoids fatigue overlap and will produce better results than daily full-body sessions.');
+  } else if(age>=35){
+    tips.push('💡 <strong style="color:#fff">Age '+age+' strategy:</strong> over 35, protein absorption per meal becomes less efficient. Instead of 3 large meals, aim for 4–5 meals of '+Math.round((proteinGoal||120)/5)+'g each, spaced 3–4 hours apart. This alone can increase muscle retention by 10–15%.');
+  }
+
+  // Specific next targets
+  var nextSU=suAvg>0?Math.round(suAvg*1.1):null;
+  var nextPU=puAvg>0?Math.round(puAvg*1.1):null;
+  var nextSQ=sqAvg>0?Math.round(sqAvg*1.1):null;
+  var nextXP=0;
+  if(nextSU)nextXP+=nextSU;
+  if(nextPU)nextXP+=Math.round(nextPU*1.2);
+  if(nextSQ)nextXP+=Math.round(nextSQ*1.5);
+  if(nextSU||nextPU||nextSQ){
+    var targetStr=[];
+    if(nextSU)targetStr.push(nextSU+' sit-ups');
+    if(nextPU)targetStr.push(nextPU+' push-ups');
+    if(nextSQ)targetStr.push(nextSQ+' squats');
+    tips.push('📈 <strong style="color:#fff">Next session targets:</strong> hit '+targetStr.join(', ')+' and you will earn approximately <strong style="color:var(--cyan)">'+nextXP+' XP</strong> — a '+Math.round((nextXP/(xpTotal/daysLogged||1)-1)*100)+'% improvement on your current session average.');
+  }
+
+  // Gender-specific
+  if(gender==='female'&&sqAvg>0){
+    tips.push('💡 <strong style="color:#fff">Squat form tip:</strong> hip-width stance with toes slightly out and squatting to parallel activates glutes 40% more than a narrow stance. At your '+sqAvg+' rep avg, this form change alone will accelerate lower body strength without adding a single rep.');
+  }
+
+  cards.push('<div class="recap-card recap-tip">💡 <strong style="color:var(--cyan)">How to Grow Faster</strong><br>'+tips.join('<br><br>')+'</div>');
   document.getElementById('recapContent').innerHTML=cards.join('');
   document.getElementById('recapOverlay').classList.add('show');
 }
