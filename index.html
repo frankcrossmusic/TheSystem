@@ -372,9 +372,21 @@ select{background:var(--panel2);border:1px solid var(--border);color:#fff;paddin
 </div>
 <div class="overlay" id="recapOverlay">
   <div class="overlay-box">
-    <div style="font-size:10px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:10px">⚡ Recap Report</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+      <div style="font-size:9px;letter-spacing:2px;color:var(--gold);text-transform:uppercase" id="recapPageLabel">Page 1 / 3</div>
+      <div style="font-size:9px;letter-spacing:2px;color:var(--text2);text-transform:uppercase" id="recapPageTitle">Achievements</div>
+    </div>
+    <div style="display:flex;gap:4px;margin-bottom:12px">
+      <div id="recapDot0" style="flex:1;height:3px;border-radius:2px;background:var(--gold);transition:background .2s"></div>
+      <div id="recapDot1" style="flex:1;height:3px;border-radius:2px;background:var(--border);transition:background .2s"></div>
+      <div id="recapDot2" style="flex:1;height:3px;border-radius:2px;background:var(--border);transition:background .2s"></div>
+    </div>
     <div id="recapContent"></div>
-    <button class="overlay-btn" style="border-color:var(--gold);color:var(--gold);width:100%;margin-top:10px" onclick="closeRecap()">CLOSE</button>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button id="recapPrevBtn" onclick="recapNav(-1)" style="flex:1;padding:10px;background:transparent;border:1px solid var(--border);color:var(--text2);font-size:11px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;border-radius:4px;display:none">◀ Prev</button>
+      <button id="recapNextBtn" onclick="recapNav(1)" style="flex:1;padding:10px;background:rgba(240,192,64,0.15);border:1px solid var(--gold);color:var(--gold);font-size:11px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;border-radius:4px">Next ▶</button>
+      <button id="recapCloseBtn" onclick="closeRecap()" style="flex:1;padding:10px;background:transparent;border:1px solid var(--border);color:var(--text2);font-size:11px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;border-radius:4px;display:none">Close</button>
+    </div>
   </div>
 </div>
 
@@ -952,9 +964,34 @@ function showRecap(){
   }
 
   cards.push('<div class="recap-card recap-tip">💡 <strong style="color:var(--cyan)">How to Grow Faster</strong><br>'+tips.join('<br><br>')+'</div>');
-  document.getElementById('recapContent').innerHTML=cards.join('');
+  // Split into 3 pages
+  recapPages=[cards[0], cards.slice(1,cards.length-1).join('')||'<div class="recap-card recap-weakness" style="color:var(--green)">✅ No major weaknesses detected in this period. Keep it up!</div>', cards[cards.length-1]];
+  recapPage=0;
+  renderRecapPage();
   document.getElementById('recapOverlay').classList.add('show');
 }
+var recapPages=[];
+var recapPage=0;
+
+function recapNav(dir){
+  recapPage+=dir;
+  recapPage=Math.max(0,Math.min(2,recapPage));
+  renderRecapPage();
+}
+
+function renderRecapPage(){
+  var titles=['Achievements','Areas to Improve','How to Grow Faster'];
+  document.getElementById('recapContent').innerHTML=recapPages[recapPage]||'';
+  document.getElementById('recapPageLabel').textContent='Page '+(recapPage+1)+' / 3';
+  document.getElementById('recapPageTitle').textContent=titles[recapPage];
+  // dots
+  for(var i=0;i<3;i++){document.getElementById('recapDot'+i).style.background=i===recapPage?'var(--gold)':'var(--border)';}
+  // buttons
+  document.getElementById('recapPrevBtn').style.display=recapPage>0?'block':'none';
+  document.getElementById('recapNextBtn').style.display=recapPage<2?'block':'none';
+  document.getElementById('recapCloseBtn').style.display=recapPage===2?'block':'none';
+}
+
 function closeRecap(){document.getElementById('recapOverlay').classList.remove('show');}
 
 // ── UI ──
