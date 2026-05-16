@@ -138,6 +138,132 @@ select{background:var(--panel2);border:1px solid var(--border);color:#fff;paddin
     </div>
   </div>
   <div id="recapBtnWrap" style="display:none"><button class="btn-gold" onclick="showRecap()">⚡ RECAP REPORT</button></div>
+  <div id="milestoneNotifWrap" style="display:none" class="panel" style="border-color:rgba(240,192,64,0.4);background:rgba(240,192,64,0.06)">
+    <div class="panel-title" style="color:var(--gold)">🏆 Reward Quest Progress</div>
+    <div id="milestoneNotifContent"></div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">Attributes</div>
+    <div class="stats-grid">
+      <div class="stat-box"><span class="stat-icon">💪</span><div><div class="stat-label">STR</div><div class="stat-val" id="strVal">1</div><div style="font-size:9px;color:var(--text2)">Lv.<span id="strLv">1</span></div></div></div>
+      <div class="stat-box"><span class="stat-icon">⚡</span><div><div class="stat-label">AGI</div><div class="stat-val" id="agiVal">1</div><div style="font-size:9px;color:var(--text2)">Lv.<span id="agiLv">1</span></div></div></div>
+      <div class="stat-box"><span class="stat-icon">🏃</span><div><div class="stat-label">END</div><div class="stat-val" id="endVal">1</div><div style="font-size:9px;color:var(--text2)">Lv.<span id="endLv">1</span></div></div></div>
+      <div class="stat-box"><span class="stat-icon">❤️</span><div><div class="stat-label">VIT</div><div class="stat-val" id="vitVal">1</div><div style="font-size:9px;color:var(--text2)">Lv.<span id="vitLv">1</span></div></div></div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">Protein Status</div>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div><div style="font-size:17px;font-weight:700;color:#fff" id="proteinDisplay">—</div><div style="font-size:10px;color:var(--text2)" id="proteinLabel">No data</div></div>
+      <div style="text-align:right"><div style="font-size:10px;color:var(--text2)">Daily Goal</div><div style="font-size:14px;font-weight:700;color:var(--gold)" id="proteinGoalDisplay">—</div></div>
+    </div>
+    <div class="protein-bar-bg"><div class="protein-bar-fill" id="proteinBar" style="width:0%"></div></div>
+    <div style="font-size:10px;color:var(--text2);margin-top:3px" id="proteinAdvice"></div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">Body & Sleep</div>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div><div style="font-size:11px;color:var(--text2)">Weight</div><div style="font-size:17px;font-weight:700;color:#fff" id="weightDisplay">—</div><div id="weightTrend" style="font-size:12px"></div></div>
+      <div style="text-align:center"><div style="font-size:11px;color:var(--text2)">Sleep</div><div style="font-size:17px;font-weight:700;color:#fff" id="sleepDisplay">—</div><div style="font-size:10px;color:var(--text2)" id="sleepLabel"></div></div>
+      <div style="text-align:right"><div style="font-size:11px;color:var(--text2)">7-Day</div><div style="display:flex;gap:3px;margin-top:4px;justify-content:flex-end" id="streakDots"></div><div style="font-size:10px;color:var(--text2);margin-top:3px" id="activitySync">—</div></div>
+    </div>
+    <div style="display:flex;gap:3px;margin-top:5px" id="sleepBlocks"></div>
+  </div>
+</div>
+
+<!-- LOG -->
+<div id="tab-log" class="tab">
+  <div id="xpGainBox" class="xp-gain"><div class="xp-gain-num" id="xpGainNum">+0 XP</div><div style="font-size:10px;color:var(--text2);letter-spacing:2px;text-transform:uppercase;margin-top:2px">XP Gained</div></div>
+  <div class="panel">
+    <div class="panel-title">Strength Training</div>
+    <div class="form-group">
+      <div class="form-label">Sit-ups <span style="display:flex;gap:7px;flex-wrap:wrap"><span class="toggle-wrap"><input type="checkbox" id="suWeighted"> Weighted <input type="number" id="suWeight" placeholder="kg" style="width:48px;display:none;margin-left:3px"></span><span class="toggle-wrap"><input type="checkbox" id="suSets" onchange="toggleSets('su')"> Sets</span></span></div>
+      <input type="number" id="situps" placeholder="Total reps (blank to skip)" min="0" oninput="updateProteinAdvice()">
+      <div class="sets-wrap" id="suSetsWrap"><div><label>Sets</label><input type="number" id="suSetCount" placeholder="3" min="1"></div><div><label>Reps/set</label><input type="number" id="suRepsSet" placeholder="10" min="1"></div></div>
+    </div>
+    <div class="form-group">
+      <div class="form-label">Push-ups <span style="display:flex;gap:7px;flex-wrap:wrap"><span class="toggle-wrap"><input type="checkbox" id="puWeighted"> Weighted <input type="number" id="puWeight" placeholder="kg" style="width:48px;display:none;margin-left:3px"></span><span class="toggle-wrap"><input type="checkbox" id="puSets" onchange="toggleSets('pu')"> Sets</span></span></div>
+      <input type="number" id="pushups" placeholder="Total reps (blank to skip)" min="0" oninput="updateProteinAdvice()">
+      <div class="sets-wrap" id="puSetsWrap"><div><label>Sets</label><input type="number" id="puSetCount" placeholder="3" min="1"></div><div><label>Reps/set</label><input type="number" id="puRepsSet" placeholder="10" min="1"></div></div>
+    </div>
+    <div class="form-group">
+      <div class="form-label">Squats <span style="display:flex;gap:7px;flex-wrap:wrap"><span class="toggle-wrap"><input type="checkbox" id="sqWeighted"> Weighted <input type="number" id="sqWeight" placeholder="kg" style="width:48px;display:none;margin-left:3px"></span><span class="toggle-wrap"><input type="checkbox" id="sqSets" onchange="toggleSets('sq')"> Sets</span></span></div>
+      <input type="number" id="squats" placeholder="Total reps (blank to skip)" min="0" oninput="updateProteinAdvice()">
+      <div class="sets-wrap" id="sqSetsWrap"><div><label>Sets</label><input type="number" id="sqSetCount" placeholder="3" min="1"></div><div><label>Reps/set</label><input type="number" id="sqRepsSet" placeholder="10" min="1"></div></div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">Cardio</div>
+    <div class="form-group">
+      <div class="form-label">Distance</div>
+      <div class="form-row"><input type="number" id="distance" placeholder="Blank to skip" step="0.1" style="flex:1" oninput="updateProteinAdvice()"><select id="distUnit" style="width:65px"><option value="km">km</option><option value="mi">mi</option></select></div>
+    </div>
+    <div class="form-group">
+      <div class="form-label">Time (mins) <span id="paceBadge"></span></div>
+      <input type="number" id="runTime" placeholder="Optional — pace bonus" min="0" oninput="updateProteinAdvice()">
+    </div>
+  </div>
+  <div class="protein-advice-box" id="proteinAdviceBox">
+    <div style="font-size:9px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:6px">🥩 Post-Workout Protein Advice</div>
+    <div id="proteinAdviceText" style="color:#fff;font-size:12px;line-height:1.7"></div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">Nutrition</div>
+    <div class="form-group"><div class="form-label">Protein Today (g)</div><input type="number" id="proteinInput" placeholder="e.g. 150" min="0"></div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">Backdate? <span style="font-size:9px;color:var(--text2)">(blank = now)</span></div>
+    <div class="form-group"><div class="form-label">Date</div><input type="date" id="backdateDate"></div>
+    <div class="form-group"><div class="form-label">Time</div><input type="time" id="backdateTime"></div>
+  </div>
+  <div class="panel">
+    <div class="pan:12px;line-height:1.6}
+.quest-card{background:rgba(240,192,64,0.07);border:1px solid rgba(240,192,64,0.3);border-radius:4px;padding:12px;margin-bottom:8px}
+.quest-bar-bg{background:rgba(240,192,64,0.1);border:1px solid var(--border);border-radius:2px;height:6px;overflow:hidden;margin:6px 0}
+.quest-bar-fill{height:100%;background:var(--gold);border-radius:2px;transition:width .3s}
+.complete-badge{color:var(--green);font-size:11px;letter-spacing:2px;text-transform:uppercase}
+.edit-entry-item{background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:10px;margin-bottom:8px}
+.recap-nav-dot{flex:1;height:3px;border-radius:2px;background:var(--border);transition:background .2s}
+.data-note{font-size:10px;color:var(--text2);font-style:italic;margin-bottom:8px}
+</style>
+</head>
+<body>
+<div class="scanline"></div>
+<button id="driveBtn" onclick="signIn()">☁ Drive</button>
+<div id="driveStatus"></div>
+<div class="app">
+<div class="header">
+  <div class="player-name">HUNTER</div>
+  <div style="font-size:10px;letter-spacing:3px;color:var(--text2);margin-top:1px">THE SYSTEM</div>
+</div>
+<nav class="nav">
+  <button class="active" onclick="showTab('status')">Status</button>
+  <button onclick="showTab('log')">Log</button>
+  <button onclick="showTab('quests')">Quests</button>
+  <button onclick="showTab('stats')">Stats</button>
+  <button onclick="showTab('tips')">Tips</button>
+  <button onclick="showTab('settings')">Set</button>
+</nav>
+
+<!-- STATUS -->
+<div id="tab-status" class="tab active">
+  <div class="panel">
+    <div class="level-num" id="levelNum">1</div>
+    <div style="font-size:9px;letter-spacing:4px;color:var(--text2);text-transform:uppercase;text-align:center;margin-top:2px">Level</div>
+    <div style="text-align:center;margin-top:4px">
+      <span class="rank-badge" id="rankBadge">E RANK</span>
+      <span class="title-badge" id="titleBadge">Novice Hunter</span>
+    </div>
+    <div style="margin-top:7px">
+      <div class="xp-bar-bg"><div class="xp-bar-fill" id="xpBar" style="width:0%"></div></div>
+      <div class="xp-text"><span id="xpCurrent">0 XP</span><span id="xpNext">to Lv 2</span></div>
+    </div>
+    <div style="margin-top:6px">
+      <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:1px"><span>Rank Progress</span><span id="rankNextLabel"></span></div>
+      <div class="rank-bar-bg"><div class="rank-bar-fill" id="rankBar" style="width:0%"></div></div>
+    </div>
+  </div>
+  <div id="recapBtnWrap" style="display:none"><button class="btn-gold" onclick="showRecap()">⚡ RECAP REPORT</button></div>
   <div class="panel">
     <div class="panel-title">Attributes</div>
     <div class="stats-grid">
