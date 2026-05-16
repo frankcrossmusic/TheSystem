@@ -305,6 +305,24 @@ select{background:var(--panel2);border:1px solid var(--border);color:#fff;paddin
     <div class="form-group"><div class="form-label">Activity Level</div><select id="activityLevel" onchange="saveProfile()"><option value="sedentary">Sedentary</option><option value="light">Light (1–2×/week)</option><option value="active" selected>Active (3–5×/week)</option><option value="heavy">Heavy (daily)</option></select></div>
   </div>
   <div class="panel">
+    <div class="panel-title">Edit Today's Entries</div>
+    <div id="editTodayList" style="font-size:12px;color:var(--text2)">Loading...</div>
+    <button class="btn-primary" style="margin-top:8px" onclick="loadTodayEntries()">↻ Refresh</button>
+  </div>
+  <div class="panel" id="editEntryPanel" style="display:none">
+    <div class="panel-title">Edit Entry</div>
+    <div id="editEntryFields"></div>
+    <div class="confirm-row">
+      <button class="confirm-yes" onclick="saveEditedEntry()">✓ Save</button>
+      <button class="confirm-no" onclick="cancelEdit()">✕ Cancel</button>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">Merge Today's Entries</div>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Combines all of today's entries into one, stacking reps, protein and distance. Sleep and weight use the latest value.</div>
+    <button class="btn-gold" onclick="mergeTodayEntries()">⚡ Merge Today's Entries</button>
+  </div>
+  <div class="panel">
     <div class="panel-title">Clear Data</div>
     <div class="settings-preset">
       <div class="preset-btn" onclick="clearPeriod(7)">Last 7 Days</div>
@@ -570,7 +588,127 @@ function saveProfile(){
   if(S.quest&&S.quest.week!==wk){S.questRerolled=false;}
   generateQuest();
 }
-function loadProfile(){
+function loadTodayEntries(){
+  const today=new Date().toDateString();
+  const entries=S.history.map((h,i)=>({...h,_idx:i})).filter(h=>h.date===today);
+  const el=document.getElementById('editTodayList');
+  if(!entries.length){el.textContent='No entries logged today.';return;}
+  el.innerHTML=entries.map(h=>{
+    const parts=[h.situps!=null&&`${h.situps} sit-ups`,h.pushups!=null&&`${h.pushups} push-ups`,h.squats!=null&&`${h.squats} squats`,h.distance!=null&&`${h.distance}${h.unit}`,h.protein!=null&&`${h.protein}g protein`,h.sleep!=null&&`${h.sleep}h sleep`,h.weight!=null&&`${h.weight}${h.wUnit} weight`].filter(Boolean).join(' · ')||'check-in';
+    return`<div class="history-item" style="flex-direction:column;align-items:flex-start;gap:6px">
+      <div style="display:flex;justify-content:space-between;width:100%">
+        <div><div style="color:#fff;font-size:12px">${h.time||'--:--'}</div><div style="font-size:11px;color:var(--text2)">${parts}</div></div>
+        <div style="color:var(--cyan);font-size:12px;font-weight:600">+${h.xp} XP</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button onclick="startEditEntry(${h._idx})" style="padding:4px 10px;background:rgba(0,212,255,0.1);border:1px solid var(--cyan);color:var(--cyan);font-size:10px;border-radius:4px;cursor:pointer">✏ Edit</button>
+        <button onclick="deleteEntry(${h._idx})" style="padding:4px 10px;background:rgba(255,36,68,0.1);border:1px solid var(--red);color:var(--red);font-size:10px;border-radius:4px;cursor:pointer">✕ Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+let editingIdx=null;
+function startEditEntry(idx){
+  editingIdx=idx;
+  const h=S.history[idx];
+  const fields=[
+    {id:'eSitups',label:'Sit-ups',val:h.situps??''},
+    {id:'ePushups',label:'Push-ups',val:h.pushups??''},
+    {id:'eSquats',label:'Squats',val:h.squats??''},
+    {id:'eDistance',label:'Distance',val:h.distance??''},
+    {id:'eProtein',label:'Protein (g)',val:h.protein??''},
+    {id:'eSleep',label:'Sleep (hrs)',val:h.sleep??''},
+    {id:'eWeight',label:'Weight',val:h.weight??''},
+  ];
+  document.getElementById('editEntryFields').innerHTML=fields.map(f=>`
+    <div class="form-group">
+      <div class="form-label">${f.label}</div>
+      <input type="number" id="${f.id}" value="${f.val}" placeholder="blank = not logged" style="background:var(--panel2);border:1px solid var(--border);color:#fff;padding:7px 9px;border-radius:4px;font-size:14px;width:100%;outline:none">
+    </div>`).join('');
+  document.getElementById('editEntryPanel').style.display='block';
+  document.getElementById('editEntryPanel').scrollIntoView({behavior:'smooth'});
+}
+
+function saveEditedEntry(){
+  if(editingIdx===null)return;
+  const h=S.history[editingIdx];
+  const oldXP=h.xp||0;
+  const get=id=>{const v=document.getElementById(id).value;return v!==''?parseFloat(v):null;};
+  const su=get('eSitups'),pu=get('ePushups'),sq=get('eSquats'),dist=get('eDistance'),protein=get('eProtein'),sleep=get('eSleep'),weight=get('eWeight');
+  // Recalculate XP
+  let newXP=0;
+  if(su!=null)newXP+=Math.round(su);
+  if(pu!=null)newXP+=Math.round(pu*1.2);
+  if(sq!=null)newXP+=Math.round(sq*1.5);
+  if(dist!=null&&dist>0)newXP+=Math.round((h.unit==='mi'?dist*1.609:dist)*20);
+  if(sleep!=null)newXP+=Math.round(50*(getSleepQuality(sleep).pct/100));
+  if(protein!=null){
+    const wKg=getLatestWeightKg();const p=S.profile||{};
+    const goal=wKg>0?getProteinGoal(wKg,p.heightCm||0,p.age||25,p.activityLevel||'active',su!=null||pu!=null||sq!=null||dist!=null):150;
+    if(protein>=goal*1.1)newXP+=40;else if(protein>=goal*0.9)newXP+=30;else if(protein>=goal*0.7)newXP+=15;
+  }
+  // Update XP delta
+  S.xp=Math.max(0,S.xp-oldXP+newXP);
+  // Update entry
+  if(su!=null)h.situps=su;else delete h.situps;
+  if(pu!=null)h.pushups=pu;else delete h.pushups;
+  if(sq!=null)h.squats=sq;else delete h.squats;
+  if(dist!=null)h.distance=dist;else delete h.distance;
+  if(protein!=null)h.protein=protein;else delete h.protein;
+  if(sleep!=null){h.sleep=sleep;S.lastSleep=sleep;}else delete h.sleep;
+  if(weight!=null){h.weight=weight;}else delete h.weight;
+  h.xp=newXP;
+  editingIdx=null;
+  document.getElementById('editEntryPanel').style.display='none';
+  saveState();updateUI();loadTodayEntries();
+  showDriveStatus('Entry updated','var(--green)');
+}
+
+function cancelEdit(){editingIdx=null;document.getElementById('editEntryPanel').style.display='none';}
+
+function deleteEntry(idx){
+  const h=S.history[idx];
+  S.xp=Math.max(0,S.xp-(h.xp||0));
+  S.history.splice(idx,1);
+  saveState();updateUI();loadTodayEntries();
+  showDriveStatus('Entry deleted','var(--text2)');
+}
+
+function mergeTodayEntries(){
+  const today=new Date().toDateString();
+  const todayEntries=S.history.filter(h=>h.date===today);
+  if(todayEntries.length<=1){showDriveStatus('Nothing to merge','var(--text2)');return;}
+  const merged={date:today,time:todayEntries[todayEntries.length-1].time,xp:0,situps:null,pushups:null,squats:null,distance:null,protein:null,sleep:null,weight:null,unit:'km',wUnit:'kg'};
+  for(const h of todayEntries){
+    if(h.situps!=null)merged.situps=(merged.situps||0)+h.situps;
+    if(h.pushups!=null)merged.pushups=(merged.pushups||0)+h.pushups;
+    if(h.squats!=null)merged.squats=(merged.squats||0)+h.squats;
+    if(h.distance!=null){merged.distance=Math.round(((merged.distance||0)+h.distance)*10)/10;merged.unit=h.unit||'km';}
+    if(h.protein!=null)merged.protein=(merged.protein||0)+h.protein;
+    if(h.sleep!=null){merged.sleep=h.sleep;} // latest wins
+    if(h.weight!=null){merged.weight=h.weight;merged.wUnit=h.wUnit||'kg';}
+  }
+  // Clean nulls
+  Object.keys(merged).forEach(k=>{if(merged[k]===null)delete merged[k];});
+  // Recalculate XP for merged entry
+  let newXP=0;
+  if(merged.situps)newXP+=Math.round(merged.situps);
+  if(merged.pushups)newXP+=Math.round(merged.pushups*1.2);
+  if(merged.squats)newXP+=Math.round(merged.squats*1.5);
+  if(merged.distance){const km=merged.unit==='mi'?merged.distance*1.609:merged.distance;newXP+=Math.round(km*20);}
+  if(merged.sleep)newXP+=Math.round(50*(getSleepQuality(merged.sleep).pct/100));
+  if(merged.protein){const wKg=getLatestWeightKg();const p=S.profile||{};const goal=wKg>0?getProteinGoal(wKg,p.heightCm||0,p.age||25,p.activityLevel||'active',merged.situps||merged.pushups||merged.squats||merged.distance):150;if(merged.protein>=goal*1.1)newXP+=40;else if(merged.protein>=goal*0.9)newXP+=30;else if(merged.protein>=goal*0.7)newXP+=15;}
+  merged.xp=newXP;
+  // Remove old entries and replace with merged
+  const totalOldXP=todayEntries.reduce((a,h)=>a+(h.xp||0),0);
+  S.xp=Math.max(0,S.xp-totalOldXP+newXP);
+  S.history=S.history.filter(h=>h.date!==today);
+  S.history.push(merged);
+  S.history.sort((a,b)=>new Date(a.date+' '+a.time)-new Date(b.date+' '+b.time));
+  saveState();updateUI();loadTodayEntries();
+  showDriveStatus(`Merged ${todayEntries.length} entries ✓`,'var(--green)');
+}
   if(!S.profile)return;
   if(S.profile.age)document.getElementById('ageInput').value=S.profile.age;
   if(S.profile.gender)document.getElementById('genderInput').value=S.profile.gender;
@@ -835,7 +973,22 @@ function submitWorkout(){
   if(sleep!==null)entry.sleep=sleep;
   if(wInput!==null){entry.weight=wInput;entry.wUnit=wUnit;}
   if(protein!==null)entry.protein=protein;
-  S.history.push(entry);
+  // Stack onto existing entry for same date if exists
+  const existIdx=S.history.findIndex(h=>h.date===entryDate);
+  if(existIdx>=0){
+    const ex=S.history[existIdx];
+    if(entry.situps!=null)ex.situps=(ex.situps||0)+entry.situps;
+    if(entry.pushups!=null)ex.pushups=(ex.pushups||0)+entry.pushups;
+    if(entry.squats!=null)ex.squats=(ex.squats||0)+entry.squats;
+    if(entry.distance!=null)ex.distance=Math.round(((ex.distance||0)+entry.distance)*10)/10;
+    if(entry.protein!=null)ex.protein=(ex.protein||0)+entry.protein;
+    if(entry.sleep!=null)ex.sleep=entry.sleep; // sleep replaces
+    if(entry.weight!=null)ex.weight=entry.weight; // weight replaces
+    ex.xp=(ex.xp||0)+entry.xp;
+    ex.time=entry.time; // update time to latest
+  } else {
+    S.history.push(entry);
+  }
   S.history.sort((a,b)=>new Date(a.date+' '+a.time)-new Date(b.date+' '+b.time));
   saveState();
   const newLevel=levelFromXP(S.xp),newRank=getRank(newLevel).rank;
