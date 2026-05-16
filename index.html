@@ -100,8 +100,8 @@ select{background:var(--panel2);border:1px solid var(--border);color:#fff;paddin
 .quest-reward{font-size:11px;color:var(--cyan)}
 .quest-bar-bg{background:rgba(240,192,64,0.1);border:1px solid var(--border);border-radius:2px;height:6px;overflow:hidden;margin:6px 0}
 .quest-bar-fill{height:100%;background:var(--gold);border-radius:2px;transition:width .3s}
-.quest-done{opacity:.5;text-decoration:line-through}
 .complete-badge{color:var(--green);font-size:11px;letter-spacing:2px;text-transform:uppercase}
+.edit-entry-item{background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:10px;margin-bottom:8px}
 </style>
 </head>
 <body>
@@ -202,17 +202,13 @@ select{background:var(--panel2);border:1px solid var(--border);color:#fff;paddin
       <input type="number" id="runTime" placeholder="Optional — pace bonus" min="0" oninput="updateProteinAdvice()">
     </div>
   </div>
-  <!-- PROTEIN ADVICE BOX — appears after exercise input -->
   <div class="protein-advice-box" id="proteinAdviceBox">
     <div style="font-size:9px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:6px">🥩 Post-Workout Protein Advice</div>
     <div id="proteinAdviceText" style="color:#fff;font-size:12px;line-height:1.7"></div>
   </div>
   <div class="panel">
     <div class="panel-title">Nutrition</div>
-    <div class="form-group">
-      <div class="form-label">Protein Today (g)</div>
-      <input type="number" id="proteinInput" placeholder="e.g. 150" min="0">
-    </div>
+    <div class="form-group"><div class="form-label">Protein Today (g)</div><input type="number" id="proteinInput" placeholder="e.g. 150" min="0"></div>
   </div>
   <div class="panel">
     <div class="panel-title">Backdate? <span style="font-size:9px;color:var(--text2)">(blank = now)</span></div>
@@ -293,10 +289,7 @@ select{background:var(--panel2);border:1px solid var(--border);color:#fff;paddin
   <div class="panel">
     <div class="panel-title">Profile</div>
     <div class="form-group"><div class="form-label">Age</div><input type="number" id="ageInput" placeholder="e.g. 25" min="10" max="99" oninput="saveProfile()"></div>
-    <div class="form-group">
-      <div class="form-label">Gender <span style="font-size:9px;color:var(--text2)">(used for exercise advice only)</span></div>
-      <select id="genderInput" onchange="saveProfile()"><option value="">Prefer not to say</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option></select>
-    </div>
+    <div class="form-group"><div class="form-label">Gender <span style="font-size:9px;color:var(--text2)">(for advice only)</span></div><select id="genderInput" onchange="saveProfile()"><option value="">Prefer not to say</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option></select></div>
     <div class="form-group">
       <div class="form-label">Height</div>
       <div class="form-row"><input type="number" id="heightInput" placeholder="e.g. 180" step="1" style="flex:1" oninput="saveProfile()"><select id="heightUnit" style="width:68px" onchange="toggleHeightUnit()"><option value="cm">cm</option><option value="ft">ft/in</option></select></div>
@@ -306,8 +299,8 @@ select{background:var(--panel2);border:1px solid var(--border);color:#fff;paddin
   </div>
   <div class="panel">
     <div class="panel-title">Edit Today's Entries</div>
-    <div id="editTodayList" style="font-size:12px;color:var(--text2)">Loading...</div>
-    <button class="btn-primary" style="margin-top:8px" onclick="loadTodayEntries()">↻ Refresh</button>
+    <div id="editTodayList" style="font-size:12px;color:var(--text2)">Tap refresh to load.</div>
+    <button class="btn-primary" style="margin-top:8px" onclick="loadTodayEntries()">↻ Load Today's Entries</button>
   </div>
   <div class="panel" id="editEntryPanel" style="display:none">
     <div class="panel-title">Edit Entry</div>
@@ -319,7 +312,7 @@ select{background:var(--panel2);border:1px solid var(--border);color:#fff;paddin
   </div>
   <div class="panel">
     <div class="panel-title">Merge Today's Entries</div>
-    <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Combines all of today's entries into one, stacking reps, protein and distance. Sleep and weight use the latest value.</div>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Combines all of today's entries — stacks reps, protein and distance. Sleep and weight use the latest value.</div>
     <button class="btn-gold" onclick="mergeTodayEntries()">⚡ Merge Today's Entries</button>
   </div>
   <div class="panel">
@@ -391,163 +384,221 @@ const CLIENT_ID='1048152252437-h1n207mqhgo4encqk1meo6a855t2uttq.apps.googleuserc
 const SCOPES='https://www.googleapis.com/auth/drive.file';
 const FILE_NAME='solo_leveling_workout_save.json';
 let driveFileId=null,accessToken=null,savePending=false;
-function showDriveStatus(msg,color='var(--cyan)'){const el=document.getElementById('driveStatus');el.style.color=color;el.textContent=msg;el.style.opacity='1';clearTimeout(el._t);el._t=setTimeout(()=>{el.style.opacity='0';},3000);}
-function signIn(){const p=new URLSearchParams({client_id:CLIENT_ID,redirect_uri:location.origin+location.pathname,response_type:'token',scope:SCOPES,prompt:'consent'});location.href='https://accounts.google.com/o/oauth2/v2/auth?'+p;}
-function parseTokenFromHash(){const h=new URLSearchParams(location.hash.replace('#',''));const t=h.get('access_token');if(t){accessToken=t;history.replaceState(null,'',location.pathname);return true;}return false;}
-async function findOrCreateFile(){const r=await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${FILE_NAME}' and trashed=false&fields=files(id,name)`,{headers:{Authorization:'Bearer '+accessToken}});const d=await r.json();if(d.files&&d.files.length){driveFileId=d.files[0].id;return;}const form=new FormData();form.append('metadata',new Blob([JSON.stringify({name:FILE_NAME})],{type:'application/json'}));form.append('file',new Blob([JSON.stringify(DEFAULT_STATE)],{type:'application/json'}));const cr=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{method:'POST',headers:{Authorization:'Bearer '+accessToken},body:form});driveFileId=(await cr.json()).id;}
-async function loadFromDrive(){showDriveStatus('⟳ Loading...');try{await findOrCreateFile();const r=await fetch(`https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`,{headers:{Authorization:'Bearer '+accessToken}});const data=await r.json();S={...DEFAULT_STATE,...data};try{localStorage.setItem('slw_v4',JSON.stringify(S));}catch(e){}updateUI();showDriveStatus('✓ Synced');const btn=document.getElementById('driveBtn');btn.textContent='✓ Drive';btn.style.borderColor='var(--green)';btn.style.color='var(--green)';btn.onclick=null;}catch(e){showDriveStatus('Load failed','var(--red)');}}
-async function saveToDrive(){if(!accessToken||!driveFileId)return;await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`,{method:'PATCH',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:JSON.stringify(S)});}
-async function saveState(){try{localStorage.setItem('slw_v4',JSON.stringify(S));}catch(e){}if(!accessToken){showDriveStatus('Saved locally','var(--text2)');return;}if(savePending)return;savePending=true;showDriveStatus('⟳ Saving...');try{await saveToDrive();showDriveStatus('✓ Saved');}catch(e){showDriveStatus('Save failed','var(--red)');}savePending=false;}
+
+function showDriveStatus(msg,color){
+  color=color||'var(--cyan)';
+  const el=document.getElementById('driveStatus');
+  el.style.color=color;el.textContent=msg;el.style.opacity='1';
+  clearTimeout(el._t);el._t=setTimeout(function(){el.style.opacity='0';},3000);
+}
+function signIn(){
+  const p=new URLSearchParams({client_id:CLIENT_ID,redirect_uri:location.origin+location.pathname,response_type:'token',scope:SCOPES,prompt:'consent'});
+  location.href='https://accounts.google.com/o/oauth2/v2/auth?'+p;
+}
+function parseTokenFromHash(){
+  const h=new URLSearchParams(location.hash.replace('#',''));
+  const t=h.get('access_token');
+  if(t){accessToken=t;history.replaceState(null,'',location.pathname);return true;}
+  return false;
+}
+async function findOrCreateFile(){
+  const r=await fetch('https://www.googleapis.com/drive/v3/files?q=name=\''+FILE_NAME+'\' and trashed=false&fields=files(id,name)',{headers:{Authorization:'Bearer '+accessToken}});
+  const d=await r.json();
+  if(d.files&&d.files.length){driveFileId=d.files[0].id;return;}
+  const form=new FormData();
+  form.append('metadata',new Blob([JSON.stringify({name:FILE_NAME})],{type:'application/json'}));
+  form.append('file',new Blob([JSON.stringify(DEFAULT_STATE)],{type:'application/json'}));
+  const cr=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{method:'POST',headers:{Authorization:'Bearer '+accessToken},body:form});
+  driveFileId=(await cr.json()).id;
+}
+async function loadFromDrive(){
+  showDriveStatus('⟳ Loading...');
+  try{
+    await findOrCreateFile();
+    const r=await fetch('https://www.googleapis.com/drive/v3/files/'+driveFileId+'?alt=media',{headers:{Authorization:'Bearer '+accessToken}});
+    const data=await r.json();
+    S=Object.assign({},DEFAULT_STATE,data);
+    try{localStorage.setItem('slw_v4',JSON.stringify(S));}catch(e){}
+    updateUI();showDriveStatus('✓ Synced');
+    const btn=document.getElementById('driveBtn');
+    btn.textContent='✓ Drive';btn.style.borderColor='var(--green)';btn.style.color='var(--green)';btn.onclick=null;
+  }catch(e){showDriveStatus('Load failed','var(--red)');}
+}
+async function saveToDrive(){
+  if(!accessToken||!driveFileId)return;
+  await fetch('https://www.googleapis.com/upload/drive/v3/files/'+driveFileId+'?uploadType=media',{method:'PATCH',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:JSON.stringify(S)});
+}
+async function saveState(){
+  try{localStorage.setItem('slw_v4',JSON.stringify(S));}catch(e){}
+  if(!accessToken){showDriveStatus('Saved locally','var(--text2)');return;}
+  if(savePending)return;
+  savePending=true;showDriveStatus('⟳ Saving...');
+  try{await saveToDrive();showDriveStatus('✓ Saved');}
+  catch(e){showDriveStatus('Save failed','var(--red)');}
+  savePending=false;
+}
 
 // ── State ──
 const DEFAULT_STATE={xp:0,level:1,strXP:0,agiXP:0,endXP:0,vitXP:0,history:[],weights:[],lastSleep:null,profile:{heightCm:0,activityLevel:'active',age:0,gender:''},quest:null,questLog:[],questRerolled:false};
-let S={...DEFAULT_STATE};
-function loadLocalState(){try{const r=localStorage.getItem('slw_v4');if(r)return{...DEFAULT_STATE,...JSON.parse(r)};}catch(e){}return{...DEFAULT_STATE};}
+let S=Object.assign({},DEFAULT_STATE);
+function loadLocalState(){
+  try{const r=localStorage.getItem('slw_v4');if(r)return Object.assign({},DEFAULT_STATE,JSON.parse(r));}catch(e){}
+  return Object.assign({},DEFAULT_STATE);
+}
 
 // ── Ranks & Levels ──
-const RANKS=[{rank:'E',min:1,max:9,color:'var(--rankE)',glow:'#888'},{rank:'D',min:10,max:19,color:'var(--rankD)',glow:'#44bb44'},{rank:'C',min:20,max:34,color:'var(--rankC)',glow:'#4488ff'},{rank:'B',min:35,max:49,color:'var(--rankB)',glow:'#aa44ff'},{rank:'A',min:50,max:74,color:'var(--rankA)',glow:'#f0c040'},{rank:'S',min:75,max:Infinity,color:'var(--rankS)',glow:'#ff2244'}];
+const RANKS=[
+  {rank:'E',min:1,max:9,color:'var(--rankE)',glow:'#888'},
+  {rank:'D',min:10,max:19,color:'var(--rankD)',glow:'#44bb44'},
+  {rank:'C',min:20,max:34,color:'var(--rankC)',glow:'#4488ff'},
+  {rank:'B',min:35,max:49,color:'var(--rankB)',glow:'#aa44ff'},
+  {rank:'A',min:50,max:74,color:'var(--rankA)',glow:'#f0c040'},
+  {rank:'S',min:75,max:Infinity,color:'var(--rankS)',glow:'#ff2244'}
+];
 const TITLES=[[1,'Novice Hunter'],[5,'Iron Hunter'],[10,'Bronze Warrior'],[15,'Silver Blade'],[20,'Gold Sentinel'],[30,'Platinum Guardian'],[40,'Diamond Phantom'],[50,'Shadow Monarch'],[75,'Void Walker'],[100,'Absolute Hunter'],[150,'God of Hunters']];
-function getTitle(lv){let t=TITLES[0];for(let[l,n]of TITLES)if(lv>=l)t=[l,n];return t[1];}
-function getRank(lv){return RANKS.find(r=>lv>=r.min&&lv<=r.max)||RANKS[0];}
-function getNextRank(lv){const i=RANKS.findIndex(r=>lv>=r.min&&lv<=r.max);return i<RANKS.length-1?RANKS[i+1]:null;}
+function getTitle(lv){var t=TITLES[0];for(var i=0;i<TITLES.length;i++)if(lv>=TITLES[i][0])t=TITLES[i];return t[1];}
+function getRank(lv){for(var i=0;i<RANKS.length;i++)if(lv>=RANKS[i].min&&lv<=RANKS[i].max)return RANKS[i];return RANKS[0];}
+function getNextRank(lv){var i=RANKS.findIndex(function(r){return lv>=r.min&&lv<=r.max;});return i<RANKS.length-1?RANKS[i+1]:null;}
 function xpForLevel(lv){return Math.round(100*Math.pow(lv,1.8));}
-function totalXpForLevel(lv){let t=0;for(let i=1;i<lv;i++)t+=xpForLevel(i);return t;}
-function levelFromXP(xp){let lv=1;while(xp>=totalXpForLevel(lv+1))lv++;return lv;}
+function totalXpForLevel(lv){var t=0;for(var i=1;i<lv;i++)t+=xpForLevel(i);return t;}
+function levelFromXP(xp){var lv=1;while(xp>=totalXpForLevel(lv+1))lv++;return lv;}
 function statLevel(xp){return Math.max(1,Math.floor(Math.pow(xp/50,0.6))+1);}
 
-// ── Protein Logic ──
+// ── Sleep ──
+function getSleepQuality(h){
+  if(h<=4)return{pct:10,label:'Critical deficit'};
+  if(h<=5)return{pct:30,label:'Severely under-rested'};
+  if(h<=6)return{pct:55,label:'Under-rested'};
+  if(h<=6.5)return{pct:70,label:'Below optimal'};
+  if(h<=7)return{pct:82,label:'Near optimal'};
+  if(h<=7.5)return{pct:92,label:'Good rest'};
+  if(h<=9)return{pct:100,label:'Optimal recovery'};
+  if(h<=10)return{pct:80,label:'Slight oversleep'};
+  return{pct:55,label:'Oversleeping'};
+}
+
+// ── Protein ──
 function getProteinGoal(weightKg,heightCm,age,activityLevel,hasWorkout){
   if(!weightKg||weightKg<=0)return null;
-  const actMap={sedentary:0.8,light:1.2,active:1.6,heavy:2.0};
-  let mult=actMap[activityLevel]||1.6;
-  if(heightCm>185)mult+=0.1;
-  else if(heightCm>175)mult+=0.05;
-  // Age-based adjustments (ESPEN guidelines)
-  if(age>=50)mult+=0.2;
-  else if(age>=35)mult+=0.1;
-  let goal=Math.round(weightKg*mult);
+  var actMap={sedentary:0.8,light:1.2,active:1.6,heavy:2.0};
+  var mult=actMap[activityLevel]||1.6;
+  if(heightCm>185)mult+=0.1;else if(heightCm>175)mult+=0.05;
+  if(age>=50)mult+=0.2;else if(age>=35)mult+=0.1;
+  var goal=Math.round(weightKg*mult);
   if(hasWorkout)goal+=25;
   return goal;
 }
-function getLatestWeightKg(){if(!S.weights||!S.weights.length)return 0;const last=S.weights[S.weights.length-1];return last.unit==='lbs'?last.val*0.4536:last.val;}
+function getLatestWeightKg(){
+  if(!S.weights||!S.weights.length)return 0;
+  var last=S.weights[S.weights.length-1];
+  return last.unit==='lbs'?last.val*0.4536:last.val;
+}
+function calcProteinXP(protein,wKg,heightCm,age,activityLevel,hasWorkout){
+  if(protein==null)return 0;
+  var goal=wKg>0?getProteinGoal(wKg,heightCm,age,activityLevel,hasWorkout):150;
+  if(protein>=goal*1.1)return 40;
+  if(protein>=goal*0.9)return 30;
+  if(protein>=goal*0.7)return 15;
+  return 0;
+}
 
-// ── Post-workout protein advice ──
 function updateProteinAdvice(){
-  const su=parseInt(document.getElementById('situps').value)||0;
-  const pu=parseInt(document.getElementById('pushups').value)||0;
-  const sq=parseInt(document.getElementById('squats').value)||0;
-  const dist=parseFloat(document.getElementById('distance').value)||0;
-  const runT=parseFloat(document.getElementById('runTime').value)||0;
-  const suRaw=document.getElementById('situps').value;
-  const puRaw=document.getElementById('pushups').value;
-  const sqRaw=document.getElementById('squats').value;
-  const distRaw=document.getElementById('distance').value;
-  const hasAny=suRaw!==''||puRaw!==''||sqRaw!==''||distRaw!=='';
+  var suRaw=document.getElementById('situps').value;
+  var puRaw=document.getElementById('pushups').value;
+  var sqRaw=document.getElementById('squats').value;
+  var distRaw=document.getElementById('distance').value;
+  var hasAny=suRaw!==''||puRaw!==''||sqRaw!==''||distRaw!=='';
   if(!hasAny){document.getElementById('proteinAdviceBox').classList.remove('show');return;}
-  const wKg=getLatestWeightKg();
-  const p=S.profile||{};
-  const age=p.age||25;
-  const hCm=p.heightCm||175;
-  const al=p.activityLevel||'active';
-  const unit=document.getElementById('distUnit').value;
-  const km=unit==='mi'?dist*1.609:dist;
-  // Calculate workout intensity
-  let intensity=0;
-  if(su>0)intensity+=su*0.5;
-  if(pu>0)intensity+=pu*0.8;
-  if(sq>0)intensity+=sq*0.6;
-  if(km>0){let mult=1;if(runT>0){const spd=km/(runT/60);if(spd>=12)mult=2;else if(spd>=6)mult=1.4;}intensity+=km*15*mult;}
-  // Post-workout protein window
-  const bodyWeightFactor=wKg>0?wKg:70;
-  const postWorkoutBonus=Math.round(Math.min(40,Math.max(20,intensity/20+bodyWeightFactor*0.05)));
-  const dailyGoal=getProteinGoal(wKg||70,hCm,age,al,true);
-  // Meal split advice
-  const mealsNeeded=Math.round(dailyGoal/35);
-  let advice=`<strong style="color:var(--gold)">Today's goal: ${dailyGoal}g</strong><br>`;
-  advice+=`Based on your workout intensity, aim for <strong style="color:#fff">${postWorkoutBonus}g within 2 hours</strong> of finishing.<br>`;
-  advice+=`Split the rest into <strong>${mealsNeeded-1} more meals</strong> of ~${Math.round((dailyGoal-postWorkoutBonus)/(mealsNeeded-1))}g each.<br>`;
-  // Age-specific advice
-  if(age>=50)advice+=`💡 Over 50: Your muscles need more protein per meal (~40g) to trigger the same growth response.`;
-  else if(age>=35)advice+=`💡 Over 35: Protein needs rise slightly. Spread intake every 3–4 hours for best absorption.`;
-  else advice+=`💡 <strong style="color:#fff">Best sources:</strong> chicken breast (~31g/100g), eggs (~6g each), Greek yogurt (~17g/200g), tuna (~30g/100g).`;
+  var su=parseInt(suRaw)||0,pu=parseInt(puRaw)||0,sq=parseInt(sqRaw)||0,dist=parseFloat(distRaw)||0;
+  var runT=parseFloat(document.getElementById('runTime').value)||0;
+  var unit=document.getElementById('distUnit').value;
+  var km=unit==='mi'?dist*1.609:dist;
+  var wKg=getLatestWeightKg();
+  var p=S.profile||{};
+  var age=p.age||25,hCm=p.heightCm||175,al=p.activityLevel||'active';
+  var intensity=su*0.5+pu*0.8+sq*0.6;
+  if(km>0){var mult=1;if(runT>0){var spd=km/(runT/60);if(spd>=12)mult=2;else if(spd>=6)mult=1.4;}intensity+=km*15*mult;}
+  var bwf=wKg>0?wKg:70;
+  var pw=Math.round(Math.min(40,Math.max(20,intensity/20+bwf*0.05)));
+  var dailyGoal=getProteinGoal(bwf,hCm,age,al,true);
+  var advice='<strong style="color:var(--gold)">Today\'s goal: '+dailyGoal+'g</strong><br>';
+  advice+='Aim for <strong style="color:#fff">'+pw+'g within 2 hours</strong> of finishing.<br>';
+  var mealsLeft=Math.max(1,Math.round((dailyGoal-pw)/35));
+  advice+='Then '+mealsLeft+' more meal'+(mealsLeft!==1?'s':'')+' of ~'+Math.round((dailyGoal-pw)/Math.max(1,mealsLeft))+'g each.<br>';
+  if(age>=50)advice+='💡 Over 50: aim for ~40g per meal for optimal muscle protein synthesis.';
+  else if(age>=35)advice+='💡 Over 35: spread protein every 3–4 hours for best absorption.';
+  else advice+='💡 Sources: chicken (~31g/100g), eggs (~6g each), Greek yogurt (~17g/200g), tuna (~30g/100g).';
   document.getElementById('proteinAdviceText').innerHTML=advice;
   document.getElementById('proteinAdviceBox').classList.add('show');
 }
 
-// ── Sleep ──
-function getSleepQuality(h){
-  if(h<=4)return{pct:10,label:'Critical deficit'};if(h<=5)return{pct:30,label:'Severely under-rested'};
-  if(h<=6)return{pct:55,label:'Under-rested'};if(h<=6.5)return{pct:70,label:'Below optimal'};
-  if(h<=7)return{pct:82,label:'Near optimal'};if(h<=7.5)return{pct:92,label:'Good rest'};
-  if(h<=9)return{pct:100,label:'Optimal recovery'};if(h<=10)return{pct:80,label:'Slight oversleep'};
-  return{pct:55,label:'Oversleeping'};
-}
-
 // ── Quest System ──
 const QUEST_POOL=[
-  {id:'plank',name:'Plank Hold',stat:'STR',unit:'seconds',desc:'Hold a plank for total time this week',why:'Planks activate more core muscles than sit-ups and build the deep stability needed for all exercises.',targets:[60,90,120,180]},
-  {id:'burpee',name:'Burpee Jumps',stat:'END',unit:'reps',desc:'Complete burpees across any sessions',why:'Burpees combine push-up, squat, and jump — the highest calorie burn per minute of any bodyweight move.',targets:[20,30,50,75]},
-  {id:'sidepl',name:'Side Planks',stat:'STR',unit:'seconds each side',desc:'Hold side planks (both sides count)',why:'Side planks target the obliques and lateral core, which protect the spine and improve all rotational movement.',targets:[30,60,90,120]},
-  {id:'toeto',name:'Lying Toe Touches',stat:'STR',unit:'reps',desc:'Complete lying toe touch reps',why:'Toe touches isolate the upper abs with less spinal compression than sit-ups.',targets:[30,50,80,120]},
-  {id:'jumpq',name:'Jump Squats',stat:'AGI',unit:'reps',desc:'Complete explosive jump squats',why:'Plyometric squats build fast-twitch muscle fibres and increase lower body power output by up to 15%.',targets:[20,40,60,100]},
-  {id:'lunge',name:'Reverse Lunges',stat:'END',unit:'reps each leg',desc:'Complete reverse lunges this week',why:'Lunges correct muscle imbalances between legs and activate glutes 30% more than squats.',targets:[20,30,50,80]},
-  {id:'mtnclmb',name:'Mountain Climbers',stat:'END',unit:'reps',desc:'Complete mountain climbers (each knee = 1)',why:'Mountain climbers combine core strength with cardio — great for endurance and ab definition.',targets:[40,60,100,150]},
-  {id:'dips',name:'Tricep Dips',stat:'STR',unit:'reps',desc:'Complete chair/bench dips this week',why:'Tricep dips build pushing strength, directly improving push-up performance.',targets:[20,30,50,80]},
-  {id:'glute',name:'Glute Bridges',stat:'STR',unit:'reps',desc:'Complete glute bridges this week',why:'Glute bridges activate the posterior chain — stronger glutes reduce knee injury risk and improve squat depth.',targets:[30,50,80,120]},
-  {id:'hollow',name:'Hollow Body Hold',stat:'STR',unit:'seconds',desc:'Hold hollow body position this week',why:'The hollow body is the foundation of all calisthenics — it teaches full-body tension and core compression.',targets:[20,40,60,90]},
-  {id:'superm',name:'Superman Extensions',stat:'STR',unit:'reps',desc:'Complete superman holds/reps',why:'Superman extensions strengthen the lower back, which is often the weak link in squats and sit-ups.',targets:[20,40,60,100]},
-  {id:'calfraise',name:'Single-Leg Calf Raises',stat:'AGI',unit:'reps each leg',desc:'Complete calf raises on each leg',why:'Calf strength improves running economy and reduces injury risk — often ignored but critical for speed.',targets:[20,40,60,100]},
-  {id:'wwall',name:'Wall Sit',stat:'END',unit:'seconds',desc:'Hold wall sit position',why:'Wall sits build quad endurance and replicate the time-under-tension of heavy squats without joint loading.',targets:[30,60,90,120]},
-  {id:'hipflx',name:'Hip Flexor Stretches',stat:'AGI',unit:'minutes held',desc:'Stretch hip flexors across the week (each side)',why:'Tight hip flexors limit squat depth and running stride — loosening them unlocks 10–15% more muscle activation in squats.',targets:[2,5,8,10]},
-  {id:'inchworm',name:'Inchworm Walkouts',stat:'STR',unit:'reps',desc:'Complete inchworm walkout reps',why:'Inchworms warm up the entire posterior chain and improve hamstring flexibility, directly benefiting running and squats.',targets:[10,15,25,40]},
-  {id:'spiderm',name:'Spiderman Push-ups',stat:'STR',unit:'reps',desc:'Complete Spiderman push-ups (each side = 1)',why:'Adds rotational core demand to a push-up, building obliques and chest simultaneously.',targets:[10,20,30,50]},
+  {id:'plank',name:'Plank Hold',stat:'STR',unit:'seconds',desc:'Hold a plank for total time this week',why:'Planks activate more core muscles than sit-ups and build deep stability.',targets:[60,90,120,180]},
+  {id:'burpee',name:'Burpee Jumps',stat:'END',unit:'reps',desc:'Complete burpees across any sessions',why:'Burpees combine push-up, squat and jump — highest calorie burn per minute of any bodyweight move.',targets:[20,30,50,75]},
+  {id:'sidepl',name:'Side Planks',stat:'STR',unit:'seconds each side',desc:'Hold side planks — both sides count',why:'Side planks target obliques and lateral core, protecting the spine and improving all rotation.',targets:[30,60,90,120]},
+  {id:'toeto',name:'Lying Toe Touches',stat:'STR',unit:'reps',desc:'Complete lying toe touch reps',why:'Isolates upper abs with less spinal compression than sit-ups.',targets:[30,50,80,120]},
+  {id:'jumpq',name:'Jump Squats',stat:'AGI',unit:'reps',desc:'Complete explosive jump squats',why:'Plyometric squats build fast-twitch fibres and increase lower body power by up to 15%.',targets:[20,40,60,100]},
+  {id:'lunge',name:'Reverse Lunges',stat:'END',unit:'reps each leg',desc:'Complete reverse lunges this week',why:'Lunges correct muscle imbalances and activate glutes 30% more than squats.',targets:[20,30,50,80]},
+  {id:'mtnclmb',name:'Mountain Climbers',stat:'END',unit:'reps',desc:'Complete mountain climbers (each knee = 1)',why:'Combine core strength with cardio — great for endurance and definition.',targets:[40,60,100,150]},
+  {id:'dips',name:'Tricep Dips',stat:'STR',unit:'reps',desc:'Complete chair/bench dips this week',why:'Tricep dips directly improve push-up performance.',targets:[20,30,50,80]},
+  {id:'glute',name:'Glute Bridges',stat:'STR',unit:'reps',desc:'Complete glute bridges this week',why:'Glute bridges reduce knee injury risk and improve squat depth.',targets:[30,50,80,120]},
+  {id:'hollow',name:'Hollow Body Hold',stat:'STR',unit:'seconds',desc:'Hold hollow body position this week',why:'Foundation of all calisthenics — teaches full-body tension and core compression.',targets:[20,40,60,90]},
+  {id:'wwall',name:'Wall Sit',stat:'END',unit:'seconds',desc:'Hold wall sit position',why:'Builds quad endurance and replicates time-under-tension of heavy squats without joint loading.',targets:[30,60,90,120]},
+  {id:'inchworm',name:'Inchworm Walkouts',stat:'STR',unit:'reps',desc:'Complete inchworm walkout reps',why:'Warms up the entire posterior chain and improves hamstring flexibility.',targets:[10,15,25,40]},
+  {id:'spiderm',name:'Spiderman Push-ups',stat:'STR',unit:'reps',desc:'Spiderman push-ups — each side = 1',why:'Adds rotational core demand, building obliques and chest simultaneously.',targets:[10,20,30,50]}
 ];
 
-function getWeekKey(){const n=new Date();const d=new Date(Date.UTC(n.getFullYear(),n.getMonth(),n.getDate()));const day=d.getUTCDay()||7;d.setUTCDate(d.getUTCDate()+4-day);const yr=d.getUTCFullYear();const wk=Math.ceil((((d-new Date(Date.UTC(yr,0,1)))/86400000)+1)/7);return `${yr}-W${wk}`;}
+function getWeekKey(){
+  var n=new Date(),d=new Date(Date.UTC(n.getFullYear(),n.getMonth(),n.getDate()));
+  var day=d.getUTCDay()||7;d.setUTCDate(d.getUTCDate()+4-day);
+  var yr=d.getUTCFullYear(),wk=Math.ceil((((d-new Date(Date.UTC(yr,0,1)))/86400000)+1)/7);
+  return yr+'-W'+wk;
+}
 
-function generateQuest(forceNew=false){
-  const wk=getWeekKey();
+function generateQuest(forceNew){
+  forceNew=forceNew||false;
+  var wk=getWeekKey();
   if(!forceNew&&S.quest&&S.quest.week===wk){renderQuest();return;}
   if(forceNew&&S.questRerolled){showDriveStatus('Already rerolled this week','var(--text2)');return;}
-  // Pick quest based on weakest stat
-  const sLv=statLevel(S.strXP),aLv=statLevel(S.agiXP),eLv=statLevel(S.endXP);
-  let pool=QUEST_POOL;
-  if(sLv<=aLv&&sLv<=eLv)pool=QUEST_POOL.filter(q=>q.stat==='STR'||q.stat==='END');
-  else if(aLv<=sLv&&aLv<=eLv)pool=QUEST_POOL.filter(q=>q.stat==='AGI');
-  else pool=QUEST_POOL.filter(q=>q.stat==='END');
-  const q=pool[Math.floor(Math.random()*pool.length)];
-  const lv=S.level;
-  const tier=lv<10?0:lv<25?1:lv<50?2:3;
-  const target=q.targets[tier];
-  const xpReward=Math.round(target*3+lv*10);
-  S.quest={week:wk,id:q.id,name:q.name,stat:q.stat,unit:q.unit,desc:q.desc,why:q.why,target,xpReward,progress:0,complete:false};
+  var sLv=statLevel(S.strXP),aLv=statLevel(S.agiXP),eLv=statLevel(S.endXP);
+  var pool=QUEST_POOL;
+  if(sLv<=aLv&&sLv<=eLv)pool=QUEST_POOL.filter(function(q){return q.stat==='STR'||q.stat==='END';});
+  else if(aLv<=sLv&&aLv<=eLv)pool=QUEST_POOL.filter(function(q){return q.stat==='AGI';});
+  else pool=QUEST_POOL.filter(function(q){return q.stat==='END';});
+  var q=pool[Math.floor(Math.random()*pool.length)];
+  var lv=S.level,tier=lv<10?0:lv<25?1:lv<50?2:3;
+  var target=q.targets[tier],xpReward=Math.round(target*3+lv*10);
+  S.quest={week:wk,id:q.id,name:q.name,stat:q.stat,unit:q.unit,desc:q.desc,why:q.why,target:target,xpReward:xpReward,progress:0,complete:false};
   if(forceNew)S.questRerolled=true;
   saveState();renderQuest();
 }
 
 function renderQuest(){
   if(!S.quest){document.getElementById('questContainer').innerHTML='<div style="font-size:12px;color:var(--text2)">Set up your profile to unlock quests.</div>';return;}
-  const q=S.quest;
-  const pct=Math.min(100,Math.round((q.progress/q.target)*100));
-  const done=q.complete;
-  document.getElementById('questContainer').innerHTML=`
-    <div class="quest-card ${done?'quest-done':''}">
-      <div class="quest-title">⚔ Weekly Quest ${done?'<span class="complete-badge">✓ COMPLETE</span>':''}</div>
-      <div class="quest-exercise">${q.name}</div>
-      <div class="quest-target">${q.desc}: <strong style="color:#fff">${q.target} ${q.unit}</strong></div>
-      <div class="quest-bar-bg"><div class="quest-bar-fill" style="width:${pct}%"></div></div>
-      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text2);margin-bottom:6px"><span>${q.progress}/${q.target} ${q.unit}</span><span>${pct}%</span></div>
-      <div class="quest-reward">🏆 Reward: +${q.xpReward} XP</div>
-      <div style="font-size:11px;color:var(--text2);margin-top:7px;line-height:1.5">💡 ${q.why}</div>
-      ${!done?`<div style="margin-top:8px"><div style="font-size:10px;color:var(--text2);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Log Progress</div><div style="display:flex;gap:6px"><input type="number" id="questProgressInput" placeholder="Add amount" min="0" style="flex:1;font-size:13px;padding:6px 8px;background:var(--panel2);border:1px solid var(--border);color:#fff;border-radius:4px;outline:none"><button onclick="addQuestProgress()" style="padding:6px 12px;background:rgba(240,192,64,0.15);border:1px solid var(--gold);color:var(--gold);font-size:11px;border-radius:4px;cursor:pointer">+ Add</button></div></div>`:''}
-    </div>`;
-  const rerollBtn=document.getElementById('questRefreshBtn');
+  var q=S.quest,pct=Math.min(100,Math.round((q.progress/q.target)*100)),done=q.complete;
+  var html='<div class="quest-card">';
+  html+='<div class="quest-title">⚔ Weekly Quest '+(done?'<span class="complete-badge">✓ COMPLETE</span>':'')+'</div>';
+  html+='<div class="quest-exercise">'+q.name+'</div>';
+  html+='<div class="quest-target">'+q.desc+': <strong style="color:#fff">'+q.target+' '+q.unit+'</strong></div>';
+  html+='<div class="quest-bar-bg"><div class="quest-bar-fill" style="width:'+pct+'%"></div></div>';
+  html+='<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text2);margin-bottom:6px"><span>'+q.progress+'/'+q.target+' '+q.unit+'</span><span>'+pct+'%</span></div>';
+  html+='<div class="quest-reward">🏆 Reward: +'+q.xpReward+' XP</div>';
+  html+='<div style="font-size:11px;color:var(--text2);margin-top:7px;line-height:1.5">💡 '+q.why+'</div>';
+  if(!done){
+    html+='<div style="margin-top:8px"><div style="font-size:10px;color:var(--text2);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Log Progress</div>';
+    html+='<div style="display:flex;gap:6px"><input type="number" id="questProgressInput" placeholder="Add amount" min="0" style="flex:1;font-size:13px;padding:6px 8px;background:var(--panel2);border:1px solid var(--border);color:#fff;border-radius:4px;outline:none">';
+    html+='<button onclick="addQuestProgress()" style="padding:6px 12px;background:rgba(240,192,64,0.15);border:1px solid var(--gold);color:var(--gold);font-size:11px;border-radius:4px;cursor:pointer">+ Add</button></div></div>';
+  }
+  html+='</div>';
+  document.getElementById('questContainer').innerHTML=html;
+  var rerollBtn=document.getElementById('questRefreshBtn');
   if(rerollBtn)rerollBtn.style.display=(!done&&!S.questRerolled)?'block':'none';
   renderQuestLog();
 }
 
 function addQuestProgress(){
-  const val=parseFloat(document.getElementById('questProgressInput').value)||0;
+  var val=parseFloat(document.getElementById('questProgressInput').value)||0;
   if(val<=0)return;
   S.quest.progress=Math.min(S.quest.target,S.quest.progress+val);
   if(S.quest.progress>=S.quest.target&&!S.quest.complete){
@@ -561,103 +612,78 @@ function addQuestProgress(){
 }
 
 function renderQuestLog(){
-  const log=S.questLog||[];
+  var log=S.questLog||[];
   if(!log.length){document.getElementById('questLog').textContent='No completed quests yet.';return;}
-  document.getElementById('questLog').innerHTML=log.slice(0,5).map(q=>`<div class="history-item"><div style="font-size:12px;color:#fff">${q.name}</div><div style="color:var(--gold);font-size:13px;font-weight:600">+${q.xp} XP</div></div>`).join('');
-}
-
-// ── Profile ──
-function toggleHeightUnit(){
-  const isCm=document.getElementById('heightUnit').value==='cm';
-  document.getElementById('heightInput').style.display=isCm?'block':'none';
-  document.getElementById('ftInWrap').style.display=isCm?'none':'flex';
-  saveProfile();
-}
-function saveProfile(){
-  const unit=document.getElementById('heightUnit').value;
-  const al=document.getElementById('activityLevel').value;
-  const age=parseInt(document.getElementById('ageInput').value)||0;
-  const gender=document.getElementById('genderInput').value;
-  let hCm=0;
-  if(unit==='cm'){hCm=parseFloat(document.getElementById('heightInput').value)||0;}
-  else{const ft=parseFloat(document.getElementById('heightFt').value)||0;const inch=parseFloat(document.getElementById('heightIn').value)||0;hCm=Math.round((ft*30.48)+(inch*2.54));}
-  S.profile={heightCm:hCm,activityLevel:al,age,gender};
-  saveState();updateUI();
-  // New week reset for quest reroll
-  const wk=getWeekKey();
-  if(S.quest&&S.quest.week!==wk){S.questRerolled=false;}
-  generateQuest();
-}
-function loadTodayEntries(){
-  const today=new Date().toDateString();
-  const entries=S.history.map((h,i)=>({...h,_idx:i})).filter(h=>h.date===today);
-  const el=document.getElementById('editTodayList');
-  if(!entries.length){el.textContent='No entries logged today.';return;}
-  el.innerHTML=entries.map(h=>{
-    const parts=[h.situps!=null&&`${h.situps} sit-ups`,h.pushups!=null&&`${h.pushups} push-ups`,h.squats!=null&&`${h.squats} squats`,h.distance!=null&&`${h.distance}${h.unit}`,h.protein!=null&&`${h.protein}g protein`,h.sleep!=null&&`${h.sleep}h sleep`,h.weight!=null&&`${h.weight}${h.wUnit} weight`].filter(Boolean).join(' · ')||'check-in';
-    return`<div class="history-item" style="flex-direction:column;align-items:flex-start;gap:6px">
-      <div style="display:flex;justify-content:space-between;width:100%">
-        <div><div style="color:#fff;font-size:12px">${h.time||'--:--'}</div><div style="font-size:11px;color:var(--text2)">${parts}</div></div>
-        <div style="color:var(--cyan);font-size:12px;font-weight:600">+${h.xp} XP</div>
-      </div>
-      <div style="display:flex;gap:6px">
-        <button onclick="startEditEntry(${h._idx})" style="padding:4px 10px;background:rgba(0,212,255,0.1);border:1px solid var(--cyan);color:var(--cyan);font-size:10px;border-radius:4px;cursor:pointer">✏ Edit</button>
-        <button onclick="deleteEntry(${h._idx})" style="padding:4px 10px;background:rgba(255,36,68,0.1);border:1px solid var(--red);color:var(--red);font-size:10px;border-radius:4px;cursor:pointer">✕ Delete</button>
-      </div>
-    </div>`;
+  document.getElementById('questLog').innerHTML=log.slice(0,5).map(function(q){
+    return'<div class="history-item"><div style="font-size:12px;color:#fff">'+q.name+'</div><div style="color:var(--gold);font-size:13px;font-weight:600">+'+q.xp+' XP</div></div>';
   }).join('');
 }
 
-let editingIdx=null;
+// ── Edit / Merge ──
+var editingIdx=null;
+
+function loadTodayEntries(){
+  var today=new Date().toDateString();
+  var entries=S.history.map(function(h,i){return Object.assign({},h,{_idx:i});}).filter(function(h){return h.date===today;});
+  var el=document.getElementById('editTodayList');
+  if(!entries.length){el.innerHTML='<div style="color:var(--text2)">No entries logged today.</div>';return;}
+  el.innerHTML=entries.map(function(h){
+    var parts=[h.situps!=null&&h.situps+' sit-ups',h.pushups!=null&&h.pushups+' push-ups',h.squats!=null&&h.squats+' squats',h.distance!=null&&h.distance+(h.unit||'km'),h.protein!=null&&h.protein+'g protein',h.sleep!=null&&h.sleep+'h sleep',h.weight!=null&&h.weight+(h.wUnit||'kg')+' weight'].filter(Boolean).join(' · ')||'check-in';
+    return '<div class="edit-entry-item">'+
+      '<div style="display:flex;justify-content:space-between;margin-bottom:6px">'+
+        '<div><div style="color:#fff;font-size:12px">'+(h.time||'--:--')+'</div><div style="font-size:11px;color:var(--text2)">'+parts+'</div></div>'+
+        '<div style="color:var(--cyan);font-size:12px;font-weight:600">+'+h.xp+' XP</div>'+
+      '</div>'+
+      '<div style="display:flex;gap:6px">'+
+        '<button onclick="startEditEntry('+h._idx+')" style="padding:4px 10px;background:rgba(0,212,255,0.1);border:1px solid var(--cyan);color:var(--cyan);font-size:10px;border-radius:4px;cursor:pointer">✏ Edit</button>'+
+        '<button onclick="deleteEntry('+h._idx+')" style="padding:4px 10px;background:rgba(255,36,68,0.1);border:1px solid var(--red);color:var(--red);font-size:10px;border-radius:4px;cursor:pointer">✕ Delete</button>'+
+      '</div></div>';
+  }).join('');
+}
+
 function startEditEntry(idx){
   editingIdx=idx;
-  const h=S.history[idx];
-  const fields=[
-    {id:'eSitups',label:'Sit-ups',val:h.situps??''},
-    {id:'ePushups',label:'Push-ups',val:h.pushups??''},
-    {id:'eSquats',label:'Squats',val:h.squats??''},
-    {id:'eDistance',label:'Distance',val:h.distance??''},
-    {id:'eProtein',label:'Protein (g)',val:h.protein??''},
-    {id:'eSleep',label:'Sleep (hrs)',val:h.sleep??''},
-    {id:'eWeight',label:'Weight',val:h.weight??''},
+  var h=S.history[idx];
+  var fields=[
+    {id:'eSitups',label:'Sit-ups',val:h.situps!=null?h.situps:''},
+    {id:'ePushups',label:'Push-ups',val:h.pushups!=null?h.pushups:''},
+    {id:'eSquats',label:'Squats',val:h.squats!=null?h.squats:''},
+    {id:'eDistance',label:'Distance',val:h.distance!=null?h.distance:''},
+    {id:'eProtein',label:'Protein (g)',val:h.protein!=null?h.protein:''},
+    {id:'eSleep',label:'Sleep (hrs)',val:h.sleep!=null?h.sleep:''},
+    {id:'eWeight',label:'Weight',val:h.weight!=null?h.weight:''}
   ];
-  document.getElementById('editEntryFields').innerHTML=fields.map(f=>`
-    <div class="form-group">
-      <div class="form-label">${f.label}</div>
-      <input type="number" id="${f.id}" value="${f.val}" placeholder="blank = not logged" style="background:var(--panel2);border:1px solid var(--border);color:#fff;padding:7px 9px;border-radius:4px;font-size:14px;width:100%;outline:none">
-    </div>`).join('');
+  document.getElementById('editEntryFields').innerHTML=fields.map(function(f){
+    return '<div class="form-group"><div class="form-label">'+f.label+'</div><input type="number" id="'+f.id+'" value="'+f.val+'" placeholder="blank = not logged"></div>';
+  }).join('');
   document.getElementById('editEntryPanel').style.display='block';
   document.getElementById('editEntryPanel').scrollIntoView({behavior:'smooth'});
 }
 
 function saveEditedEntry(){
   if(editingIdx===null)return;
-  const h=S.history[editingIdx];
-  const oldXP=h.xp||0;
-  const get=id=>{const v=document.getElementById(id).value;return v!==''?parseFloat(v):null;};
-  const su=get('eSitups'),pu=get('ePushups'),sq=get('eSquats'),dist=get('eDistance'),protein=get('eProtein'),sleep=get('eSleep'),weight=get('eWeight');
-  // Recalculate XP
-  let newXP=0;
+  var h=S.history[editingIdx];
+  var oldXP=h.xp||0;
+  function getVal(id){var v=document.getElementById(id).value;return v!==''?parseFloat(v):null;}
+  var su=getVal('eSitups'),pu=getVal('ePushups'),sq=getVal('eSquats'),dist=getVal('eDistance'),protein=getVal('eProtein'),sleep=getVal('eSleep'),weight=getVal('eWeight');
+  var newXP=0;
   if(su!=null)newXP+=Math.round(su);
   if(pu!=null)newXP+=Math.round(pu*1.2);
   if(sq!=null)newXP+=Math.round(sq*1.5);
   if(dist!=null&&dist>0)newXP+=Math.round((h.unit==='mi'?dist*1.609:dist)*20);
   if(sleep!=null)newXP+=Math.round(50*(getSleepQuality(sleep).pct/100));
   if(protein!=null){
-    const wKg=getLatestWeightKg();const p=S.profile||{};
-    const goal=wKg>0?getProteinGoal(wKg,p.heightCm||0,p.age||25,p.activityLevel||'active',su!=null||pu!=null||sq!=null||dist!=null):150;
-    if(protein>=goal*1.1)newXP+=40;else if(protein>=goal*0.9)newXP+=30;else if(protein>=goal*0.7)newXP+=15;
+    var wKg=getLatestWeightKg(),p2=S.profile||{};
+    newXP+=calcProteinXP(protein,wKg,p2.heightCm||0,p2.age||25,p2.activityLevel||'active',su!=null||pu!=null||sq!=null||dist!=null);
   }
-  // Update XP delta
   S.xp=Math.max(0,S.xp-oldXP+newXP);
-  // Update entry
   if(su!=null)h.situps=su;else delete h.situps;
   if(pu!=null)h.pushups=pu;else delete h.pushups;
   if(sq!=null)h.squats=sq;else delete h.squats;
   if(dist!=null)h.distance=dist;else delete h.distance;
   if(protein!=null)h.protein=protein;else delete h.protein;
   if(sleep!=null){h.sleep=sleep;S.lastSleep=sleep;}else delete h.sleep;
-  if(weight!=null){h.weight=weight;}else delete h.weight;
+  if(weight!=null)h.weight=weight;else delete h.weight;
   h.xp=newXP;
   editingIdx=null;
   document.getElementById('editEntryPanel').style.display='none';
@@ -668,7 +694,7 @@ function saveEditedEntry(){
 function cancelEdit(){editingIdx=null;document.getElementById('editEntryPanel').style.display='none';}
 
 function deleteEntry(idx){
-  const h=S.history[idx];
+  var h=S.history[idx];
   S.xp=Math.max(0,S.xp-(h.xp||0));
   S.history.splice(idx,1);
   saveState();updateUI();loadTodayEntries();
@@ -676,39 +702,58 @@ function deleteEntry(idx){
 }
 
 function mergeTodayEntries(){
-  const today=new Date().toDateString();
-  const todayEntries=S.history.filter(h=>h.date===today);
+  var today=new Date().toDateString();
+  var todayEntries=S.history.filter(function(h){return h.date===today;});
   if(todayEntries.length<=1){showDriveStatus('Nothing to merge','var(--text2)');return;}
-  const merged={date:today,time:todayEntries[todayEntries.length-1].time,xp:0,situps:null,pushups:null,squats:null,distance:null,protein:null,sleep:null,weight:null,unit:'km',wUnit:'kg'};
-  for(const h of todayEntries){
+  var merged={date:today,time:todayEntries[todayEntries.length-1].time,xp:0,unit:'km',wUnit:'kg'};
+  todayEntries.forEach(function(h){
     if(h.situps!=null)merged.situps=(merged.situps||0)+h.situps;
     if(h.pushups!=null)merged.pushups=(merged.pushups||0)+h.pushups;
     if(h.squats!=null)merged.squats=(merged.squats||0)+h.squats;
     if(h.distance!=null){merged.distance=Math.round(((merged.distance||0)+h.distance)*10)/10;merged.unit=h.unit||'km';}
     if(h.protein!=null)merged.protein=(merged.protein||0)+h.protein;
-    if(h.sleep!=null){merged.sleep=h.sleep;} // latest wins
+    if(h.sleep!=null)merged.sleep=h.sleep;
     if(h.weight!=null){merged.weight=h.weight;merged.wUnit=h.wUnit||'kg';}
-  }
-  // Clean nulls
-  Object.keys(merged).forEach(k=>{if(merged[k]===null)delete merged[k];});
-  // Recalculate XP for merged entry
-  let newXP=0;
+  });
+  var newXP=0;
   if(merged.situps)newXP+=Math.round(merged.situps);
   if(merged.pushups)newXP+=Math.round(merged.pushups*1.2);
   if(merged.squats)newXP+=Math.round(merged.squats*1.5);
-  if(merged.distance){const km=merged.unit==='mi'?merged.distance*1.609:merged.distance;newXP+=Math.round(km*20);}
+  if(merged.distance){var km2=merged.unit==='mi'?merged.distance*1.609:merged.distance;newXP+=Math.round(km2*20);}
   if(merged.sleep)newXP+=Math.round(50*(getSleepQuality(merged.sleep).pct/100));
-  if(merged.protein){const wKg=getLatestWeightKg();const p=S.profile||{};const goal=wKg>0?getProteinGoal(wKg,p.heightCm||0,p.age||25,p.activityLevel||'active',merged.situps||merged.pushups||merged.squats||merged.distance):150;if(merged.protein>=goal*1.1)newXP+=40;else if(merged.protein>=goal*0.9)newXP+=30;else if(merged.protein>=goal*0.7)newXP+=15;}
+  if(merged.protein){var wKg2=getLatestWeightKg(),pm=S.profile||{};newXP+=calcProteinXP(merged.protein,wKg2,pm.heightCm||0,pm.age||25,pm.activityLevel||'active',merged.situps||merged.pushups||merged.squats||merged.distance);}
   merged.xp=newXP;
-  // Remove old entries and replace with merged
-  const totalOldXP=todayEntries.reduce((a,h)=>a+(h.xp||0),0);
+  var totalOldXP=todayEntries.reduce(function(a,h){return a+(h.xp||0);},0);
   S.xp=Math.max(0,S.xp-totalOldXP+newXP);
-  S.history=S.history.filter(h=>h.date!==today);
+  S.history=S.history.filter(function(h){return h.date!==today;});
   S.history.push(merged);
-  S.history.sort((a,b)=>new Date(a.date+' '+a.time)-new Date(b.date+' '+b.time));
+  S.history.sort(function(a,b){return new Date(a.date+' '+a.time)-new Date(b.date+' '+b.time);});
   saveState();updateUI();loadTodayEntries();
-  showDriveStatus(`Merged ${todayEntries.length} entries ✓`,'var(--green)');
+  showDriveStatus('Merged '+todayEntries.length+' entries ✓','var(--green)');
 }
+
+// ── Profile ──
+function toggleHeightUnit(){
+  var isCm=document.getElementById('heightUnit').value==='cm';
+  document.getElementById('heightInput').style.display=isCm?'block':'none';
+  document.getElementById('ftInWrap').style.display=isCm?'none':'flex';
+  saveProfile();
+}
+function saveProfile(){
+  var unit=document.getElementById('heightUnit').value;
+  var al=document.getElementById('activityLevel').value;
+  var age=parseInt(document.getElementById('ageInput').value)||0;
+  var gender=document.getElementById('genderInput').value;
+  var hCm=0;
+  if(unit==='cm'){hCm=parseFloat(document.getElementById('heightInput').value)||0;}
+  else{var ft=parseFloat(document.getElementById('heightFt').value)||0,inch=parseFloat(document.getElementById('heightIn').value)||0;hCm=Math.round(ft*30.48+inch*2.54);}
+  S.profile={heightCm:hCm,activityLevel:al,age:age,gender:gender};
+  saveState();updateUI();
+  var wk=getWeekKey();
+  if(S.quest&&S.quest.week!==wk){S.questRerolled=false;S.quest=null;}
+  generateQuest();
+}
+function loadProfile(){
   if(!S.profile)return;
   if(S.profile.age)document.getElementById('ageInput').value=S.profile.age;
   if(S.profile.gender)document.getElementById('genderInput').value=S.profile.gender;
@@ -718,63 +763,65 @@ function mergeTodayEntries(){
 
 // ── Guidance ──
 function buildGuidance(){
-  const h=S.history;
+  var h=S.history;
   if(h.length<7){document.getElementById('guidancePanel').style.display='none';return;}
   document.getElementById('guidancePanel').style.display='block';
-  const p=S.profile||{};
-  const gender=p.gender||'';
-  const age=p.age||25;
-  const cards=[];
-  ['situps','pushups','squats'].forEach(key=>{
-    const logged=h.filter(e=>e[key]!=null);
+  var p=S.profile||{},gender=p.gender||'',age=p.age||25;
+  var cards=[];
+  ['situps','pushups','squats'].forEach(function(key){
+    var logged=h.filter(function(e){return e[key]!=null;});
     if(logged.length<7)return;
-    const recent=logged.slice(-7);
-    const avg=Math.round(recent.reduce((a,e)=>a+(e[key]||0),0)/recent.length);
-    const trend=recent[recent.length-1][key]-recent[0][key];
-    const name=key==='situps'?'Sit-ups':key==='pushups'?'Push-ups':'Squats';
-    const setsData=recent.filter(e=>e[key+'Sets']&&e[key+'Reps']);
-    const avgSets=setsData.length?Math.round(setsData.reduce((a,e)=>a+e[key+'Sets'],0)/setsData.length):3;
-    const avgReps=setsData.length?Math.round(setsData.reduce((a,e)=>a+e[key+'Reps'],0)/setsData.length):Math.round(avg/3);
-    const goalReps=avgReps+2,goalSets=avg>60?avgSets+1:avgSets;
-    let trendNote=trend>10?`📈 Up ${trend} reps over 7 sessions — great progress!`:trend<-5?`📉 Declining — add a rest day between sessions.`:`➡ Steady. Time to increase volume.`;
-    let tip=avg<20?'Slow the eccentric phase to 3s for more muscle activation.':avg<50?'Try adding a 4th set to increase total volume.':'Consider weighted or harder variations (e.g. decline push-ups, pistol squats).';
-    if(gender==='female'&&key==='squats')tip='Focus on hip-width stance and depth — deeper squats activate glutes 40% more.';
-    if(age>=40&&key==='situps')tip='At 40+ consider replacing some sit-ups with planks to reduce spinal compression.';
-    cards.push(`<div class="guidance-card"><strong style="color:var(--purple)">${name}</strong><br>7-session avg: <strong style="color:#fff">${avg} reps</strong> · ${trendNote}<br>🎯 Goal: <strong style="color:#fff">${goalSets}×${goalReps}</strong><br>💡 ${tip}</div>`);
+    var recent=logged.slice(-7);
+    var avg=Math.round(recent.reduce(function(a,e){return a+(e[key]||0);},0)/recent.length);
+    var trend=recent[recent.length-1][key]-recent[0][key];
+    var name=key==='situps'?'Sit-ups':key==='pushups'?'Push-ups':'Squats';
+    var setsData=recent.filter(function(e){return e[key+'Sets']&&e[key+'Reps'];});
+    var avgReps=setsData.length?Math.round(setsData.reduce(function(a,e){return a+e[key+'Reps'];},0)/setsData.length):Math.round(avg/3);
+    var avgSets=setsData.length?Math.round(setsData.reduce(function(a,e){return a+e[key+'Sets'];},0)/setsData.length):3;
+    var goalReps=avgReps+2,goalSets=avg>60?avgSets+1:avgSets;
+    var trendNote=trend>10?'📈 Up '+trend+' reps over 7 sessions!':trend<-5?'📉 Declining — add rest days.':'➡ Steady. Time to increase volume.';
+    var tip=avg<20?'Slow the eccentric phase to 3s for more muscle activation.':avg<50?'Try adding a 4th set to increase total volume.':'Consider weighted or harder variations.';
+    if(gender==='female'&&key==='squats')tip='Hip-width stance and full depth activates glutes 40% more.';
+    if(age>=40&&key==='situps')tip='Over 40: replace some sit-ups with planks to reduce spinal compression.';
+    cards.push('<div class="guidance-card"><strong style="color:var(--purple)">'+name+'</strong><br>7-session avg: <strong style="color:#fff">'+avg+' reps</strong> · '+trendNote+'<br>🎯 Goal: <strong style="color:#fff">'+goalSets+'×'+goalReps+'</strong><br>💡 '+tip+'</div>');
   });
-  const runLogged=h.filter(e=>e.distance!=null);
+  var runLogged=h.filter(function(e){return e.distance!=null;});
   if(runLogged.length>=7){
-    const recent=runLogged.slice(-7);
-    const avgKm=(recent.reduce((a,e)=>a+(e.unit==='mi'?e.distance*1.609:e.distance),0)/recent.length).toFixed(1);
-    cards.push(`<div class="guidance-card"><strong style="color:var(--purple)">Running</strong><br>7-session avg: <strong style="color:#fff">${avgKm} km</strong><br>🎯 Goal: <strong style="color:#fff">${(parseFloat(avgKm)+0.5).toFixed(1)} km</strong><br>💡 80% easy pace, 20% sprint intervals for fastest gains.</div>`);
+    var recent2=runLogged.slice(-7);
+    var avgKm=(recent2.reduce(function(a,e){return a+(e.unit==='mi'?e.distance*1.609:e.distance);},0)/recent2.length).toFixed(1);
+    cards.push('<div class="guidance-card"><strong style="color:var(--purple)">Running</strong><br>Avg: <strong style="color:#fff">'+avgKm+' km</strong><br>🎯 Goal: <strong style="color:#fff">'+( parseFloat(avgKm)+0.5).toFixed(1)+' km</strong><br>💡 80% easy pace, 20% sprint intervals.</div>');
   }
   document.getElementById('guidanceContainer').innerHTML=cards.length?cards.join(''):'<div style="font-size:12px;color:var(--text2)">Keep logging — guidance appears after 7 sessions per exercise.</div>';
 }
 
 // ── Recap ──
-function checkRecap(){const n=S.history.length;document.getElementById('recapBtnWrap').style.display=(n>0&&n%6===0)?'block':'none';}
+function checkRecap(){var n=S.history.length;document.getElementById('recapBtnWrap').style.display=(n>0&&n%6===0)?'block':'none';}
 function showRecap(){
-  const h=S.history.slice(-6);const p=S.profile||{};
-  const cards=[];
-  const suMax=Math.max(...h.map(e=>e.situps||0)),puMax=Math.max(...h.map(e=>e.pushups||0)),sqMax=Math.max(...h.map(e=>e.squats||0));
-  const daysLogged=new Set(h.map(e=>e.date)).size;
-  const avgSleep=(h.filter(e=>e.sleep).reduce((a,e)=>a+e.sleep,0)/Math.max(1,h.filter(e=>e.sleep).length)).toFixed(1);
-  const xpTotal=h.reduce((a,e)=>a+e.xp,0);
-  const proteinAvg=h.filter(e=>e.protein!=null).length?Math.round(h.filter(e=>e.protein!=null).reduce((a,e)=>a+e.protein,0)/h.filter(e=>e.protein!=null).length):0;
-  cards.push(`<div class="recap-card recap-achievement">🏆 <strong style="color:var(--green)">Achievements</strong><br>${suMax>0?`Best sit-ups: <strong>${suMax}</strong><br>`:''}${puMax>0?`Best push-ups: <strong>${puMax}</strong><br>`:''}${sqMax>0?`Best squats: <strong>${sqMax}</strong><br>`:''}Sessions: <strong>${daysLogged}/6</strong> · XP earned: <strong style="color:var(--cyan)">${xpTotal}</strong></div>`);
-  const weak=[];
-  if(parseFloat(avgSleep)<7)weak.push(`Sleep avg <strong>${avgSleep}h</strong> — under 7h reduces muscle protein synthesis by ~18%.`);
-  if(daysLogged<4)weak.push(`Only <strong>${daysLogged} sessions</strong> — aim for 4–5/week for consistent growth.`);
-  const wKg=getLatestWeightKg();const goal=wKg>0?getProteinGoal(wKg,p.heightCm||0,p.age||25,p.activityLevel||'active',false):0;
-  if(proteinAvg>0&&goal>0&&proteinAvg<goal*0.8)weak.push(`Protein avg <strong>${proteinAvg}g</strong> vs ${goal}g goal — muscles can't repair without fuel.`);
-  if(!h.some(e=>e.distance!=null))weak.push('No cardio logged — 2×2km runs/week significantly boosts recovery and endurance.');
-  if(weak.length)cards.push(`<div class="recap-card recap-weakness">⚠️ <strong style="color:var(--red)">Areas to Improve</strong><br>${weak.join('<br>')}</div>`);
-  const tips=['Add 1–2 reps per set each week (progressive overload) for continuous growth.'];
-  if(parseFloat(avgSleep)<8)tips.push('Sleep 7.5–9h — growth hormone peaks during deep sleep stage 3.');
-  if(wKg>0)tips.push(`Aim for <strong>${getProteinGoal(wKg,p.heightCm||0,p.age||25,p.activityLevel||'active',true)}g protein on workout days</strong>.`);
-  if(p.age>=40)tips.push('Over 40: prioritise recovery days. Muscle repair takes 48–72h as we age.');
-  tips.push('Slow your reps to 3s on the way down — time under tension builds 23% more muscle than fast reps.');
-  cards.push(`<div class="recap-card recap-tip">💡 <strong style="color:var(--cyan)">How to Grow Faster</strong><br>${tips.join('<br>')}</div>`);
+  var h=S.history.slice(-6),p=S.profile||{},cards=[];
+  var suMax=Math.max.apply(null,[0].concat(h.map(function(e){return e.situps||0;})));
+  var puMax=Math.max.apply(null,[0].concat(h.map(function(e){return e.pushups||0;})));
+  var sqMax=Math.max.apply(null,[0].concat(h.map(function(e){return e.squats||0;})));
+  var daysLogged=new Set(h.map(function(e){return e.date;})).size;
+  var sleepArr=h.filter(function(e){return e.sleep;});
+  var avgSleep=sleepArr.length?(sleepArr.reduce(function(a,e){return a+e.sleep;},0)/sleepArr.length).toFixed(1):'0';
+  var xpTotal=h.reduce(function(a,e){return a+e.xp;},0);
+  var protArr=h.filter(function(e){return e.protein!=null;});
+  var proteinAvg=protArr.length?Math.round(protArr.reduce(function(a,e){return a+e.protein;},0)/protArr.length):0;
+  var achHTML=(suMax>0?'Best sit-ups: <strong>'+suMax+'</strong><br>':'')+(puMax>0?'Best push-ups: <strong>'+puMax+'</strong><br>':'')+(sqMax>0?'Best squats: <strong>'+sqMax+'</strong><br>':'')+'Sessions: <strong>'+daysLogged+'/6</strong> · XP: <strong style="color:var(--cyan)">'+xpTotal+'</strong>';
+  cards.push('<div class="recap-card recap-achievement">🏆 <strong style="color:var(--green)">Achievements</strong><br>'+achHTML+'</div>');
+  var weak=[];
+  if(parseFloat(avgSleep)<7)weak.push('Sleep avg <strong>'+avgSleep+'h</strong> — under 7h reduces muscle protein synthesis by ~18%.');
+  if(daysLogged<4)weak.push('Only <strong>'+daysLogged+' sessions</strong> — aim for 4–5/week.');
+  var wKg=getLatestWeightKg(),goal=wKg>0?getProteinGoal(wKg,p.heightCm||0,p.age||25,p.activityLevel||'active',false):0;
+  if(proteinAvg>0&&goal>0&&proteinAvg<goal*0.8)weak.push('Protein avg <strong>'+proteinAvg+'g</strong> vs '+goal+'g goal.');
+  if(!h.some(function(e){return e.distance!=null;}))weak.push('No cardio — 2×2km runs/week boosts recovery significantly.');
+  if(weak.length)cards.push('<div class="recap-card recap-weakness">⚠️ <strong style="color:var(--red)">Areas to Improve</strong><br>'+weak.join('<br>')+'</div>');
+  var tips=['Add 1–2 reps per set each week (progressive overload).'];
+  if(parseFloat(avgSleep)<8)tips.push('Sleep 7.5–9h — growth hormone peaks during deep sleep.');
+  if(wKg>0)tips.push('Aim for <strong>'+getProteinGoal(wKg,p.heightCm||0,p.age||25,p.activityLevel||'active',true)+'g protein on workout days</strong>.');
+  if(p.age>=40)tips.push('Over 40: prioritise recovery — muscle repair takes 48–72h.');
+  tips.push('Slow reps to 3s on the way down — builds 23% more muscle than fast reps.');
+  cards.push('<div class="recap-card recap-tip">💡 <strong style="color:var(--cyan)">How to Grow Faster</strong><br>'+tips.join('<br>')+'</div>');
   document.getElementById('recapContent').innerHTML=cards.join('');
   document.getElementById('recapOverlay').classList.add('show');
 }
@@ -782,175 +829,190 @@ function closeRecap(){document.getElementById('recapOverlay').classList.remove('
 
 // ── UI ──
 function updateUI(){
-  const lv=levelFromXP(S.xp);S.level=lv;
-  const curLvXP=totalXpForLevel(lv),nextLvXP=totalXpForLevel(lv+1);
-  const pct=Math.min(100,Math.round((S.xp-curLvXP)/(nextLvXP-curLvXP)*100));
+  var lv=levelFromXP(S.xp);S.level=lv;
+  var curLvXP=totalXpForLevel(lv),nextLvXP=totalXpForLevel(lv+1);
+  var pct=Math.min(100,Math.round((S.xp-curLvXP)/(nextLvXP-curLvXP)*100));
   document.getElementById('levelNum').textContent=lv;
   document.getElementById('titleBadge').textContent=getTitle(lv);
   document.getElementById('xpBar').style.width=pct+'%';
   document.getElementById('xpCurrent').textContent=S.xp.toLocaleString()+' XP';
   document.getElementById('xpNext').textContent=(nextLvXP-S.xp).toLocaleString()+' to Lv '+(lv+1);
-  const rank=getRank(lv),nextRank=getNextRank(lv);
-  const rb=document.getElementById('rankBadge');
+  var rank=getRank(lv),nextRank=getNextRank(lv);
+  var rb=document.getElementById('rankBadge');
   rb.textContent=rank.rank+' RANK';rb.style.color=rank.color;rb.style.borderColor=rank.color;rb.style.boxShadow='0 0 10px '+rank.glow+'44';
-  const nR=nextRank;
-  document.getElementById('rankBar').style.width=(nR?Math.min(100,Math.round((lv-rank.min)/(nR.min-rank.min)*100)):100)+'%';
+  document.getElementById('rankBar').style.width=(nextRank?Math.min(100,Math.round((lv-rank.min)/(nextRank.min-rank.min)*100)):100)+'%';
   document.getElementById('rankBar').style.background=rank.color;
-  document.getElementById('rankNextLabel').textContent=nR?nR.rank+' at Lv '+nR.min:'MAX RANK';
-  const sLv=statLevel(S.strXP),aLv=statLevel(S.agiXP),eLv=statLevel(S.endXP),vLv=statLevel(S.vitXP);
+  document.getElementById('rankNextLabel').textContent=nextRank?nextRank.rank+' at Lv '+nextRank.min:'MAX RANK';
+  var sLv=statLevel(S.strXP),aLv=statLevel(S.agiXP),eLv=statLevel(S.endXP),vLv=statLevel(S.vitXP);
   document.getElementById('strVal').textContent=sLv;document.getElementById('strLv').textContent=sLv;
   document.getElementById('agiVal').textContent=aLv;document.getElementById('agiLv').textContent=aLv;
   document.getElementById('endVal').textContent=eLv;document.getElementById('endLv').textContent=eLv;
   document.getElementById('vitVal').textContent=vLv;document.getElementById('vitLv').textContent=vLv;
   updateProteinStatus();updateWeightSleep();updateStreak();updateRecords();generateTips();buildGuidance();checkRecap();
-  // Reset quest reroll flag on new week
-  const wk=getWeekKey();
+  var wk=getWeekKey();
   if(S.quest&&S.quest.week!==wk){S.questRerolled=false;S.quest=null;generateQuest();}
   else generateQuest();
 }
 
 function updateProteinStatus(){
-  const wKg=getLatestWeightKg();const p=S.profile||{};
-  const goal=wKg>0?getProteinGoal(wKg,p.heightCm||0,p.age||25,p.activityLevel||'active',false):null;
-  const last=S.history.slice().reverse().find(e=>e.protein!=null);
+  var wKg=getLatestWeightKg(),p=S.profile||{};
+  var goal=wKg>0?getProteinGoal(wKg,p.heightCm||0,p.age||25,p.activityLevel||'active',false):null;
+  var last=null;
+  for(var i=S.history.length-1;i>=0;i--){if(S.history[i].protein!=null){last=S.history[i];break;}}
   document.getElementById('proteinGoalDisplay').textContent=goal?goal+'g':'Set weight first';
   if(!last){document.getElementById('proteinDisplay').textContent='—';document.getElementById('proteinLabel').textContent='No data';document.getElementById('proteinAdvice').textContent='';return;}
-  const pr=last.protein;
+  var pr=last.protein;
   document.getElementById('proteinDisplay').textContent=pr+'g';
   if(goal){
-    const pct=Math.min(100,Math.round(pr/goal*100));
-    document.getElementById('proteinBar').style.width=pct+'%';
-    if(pr>=goal*1.1){document.getElementById('proteinLabel').textContent='Excellent — exceeding goal';document.getElementById('proteinAdvice').textContent='💪 Optimal for muscle repair';}
-    else if(pr>=goal*0.9){document.getElementById('proteinLabel').textContent='Goal hit!';document.getElementById('proteinAdvice').textContent='✅ Perfect for your activity level';}
+    var pct2=Math.min(100,Math.round(pr/goal*100));
+    document.getElementById('proteinBar').style.width=pct2+'%';
+    if(pr>=goal*1.1){document.getElementById('proteinLabel').textContent='Excellent!';document.getElementById('proteinAdvice').textContent='💪 Optimal for muscle repair';}
+    else if(pr>=goal*0.9){document.getElementById('proteinLabel').textContent='Goal hit!';document.getElementById('proteinAdvice').textContent='✅ Perfect intake';}
     else if(pr>=goal*0.7){document.getElementById('proteinLabel').textContent='Getting close';document.getElementById('proteinAdvice').textContent='⚠️ Add a protein shake or extra meal';}
     else{document.getElementById('proteinLabel').textContent='Under target';document.getElementById('proteinAdvice').textContent='❌ Low protein slows recovery';}
   }
 }
 
 function updateWeightSleep(){
-  if(!S.weights||!S.weights.length)document.getElementById('weightDisplay').textContent='—';
-  else{const last=S.weights[S.weights.length-1];document.getElementById('weightDisplay').textContent=last.val+' '+last.unit;let trend='';if(S.weights.length>=2){const diff=last.val-S.weights[S.weights.length-2].val;if(Math.abs(diff)<0.5)trend='<span style="color:var(--green)">→</span>';else if(diff>0)trend='<span style="color:#ff8844">↑</span>';else trend='<span style="color:#44aaff">↓</span>';}document.getElementById('weightTrend').innerHTML=trend;}
+  if(!S.weights||!S.weights.length){document.getElementById('weightDisplay').textContent='—';}
+  else{
+    var last=S.weights[S.weights.length-1];
+    document.getElementById('weightDisplay').textContent=last.val+' '+last.unit;
+    var trend='';
+    if(S.weights.length>=2){var diff=last.val-S.weights[S.weights.length-2].val;if(Math.abs(diff)<0.5)trend='<span style="color:var(--green)">→</span>';else if(diff>0)trend='<span style="color:#ff8844">↑</span>';else trend='<span style="color:#44aaff">↓</span>';}
+    document.getElementById('weightTrend').innerHTML=trend;
+  }
   if(!S.lastSleep){document.getElementById('sleepDisplay').textContent='—';document.getElementById('sleepBlocks').innerHTML='';return;}
-  const q=getSleepQuality(S.lastSleep);
+  var q=getSleepQuality(S.lastSleep);
   document.getElementById('sleepDisplay').textContent=S.lastSleep+'h';
   document.getElementById('sleepLabel').textContent=q.label;
-  const blocks=document.getElementById('sleepBlocks');blocks.innerHTML='';
-  const filled=Math.round((q.pct/100)*10);
-  for(let i=0;i<10;i++){const d=document.createElement('div');d.className='sq-block'+(i<filled?' filled':'');blocks.appendChild(d);}
-  const r7=S.history.slice(-7).filter(h=>h.situps!=null||h.pushups!=null||h.squats!=null||h.distance!=null).length;
+  var blocks=document.getElementById('sleepBlocks');blocks.innerHTML='';
+  var filled=Math.round((q.pct/100)*10);
+  for(var i=0;i<10;i++){var d=document.createElement('div');d.className='sq-block'+(i<filled?' filled':'');blocks.appendChild(d);}
+  var r7=S.history.slice(-7).filter(function(h){return h.situps!=null||h.pushups!=null||h.squats!=null||h.distance!=null;}).length;
   document.getElementById('activitySync').textContent=r7>=5?'High':r7>=3?'Moderate':'Low';
 }
 
 function updateStreak(){
-  const dots=document.getElementById('streakDots');dots.innerHTML='';
-  const today=new Date().toDateString();
-  for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const ds=d.toDateString();const logged=S.history.some(h=>h.date===ds);const el=document.createElement('div');el.className='dot'+(logged?ds===today?' today':' filled':'');dots.appendChild(el);}
+  var dots=document.getElementById('streakDots');dots.innerHTML='';
+  var today=new Date().toDateString();
+  for(var i=6;i>=0;i--){
+    var d=new Date();d.setDate(d.getDate()-i);var ds=d.toDateString();
+    var logged=S.history.some(function(h){return h.date===ds;});
+    var el2=document.createElement('div');el2.className='dot'+(logged?ds===today?' today':' filled':'');dots.appendChild(el2);
+  }
 }
 
 function updateRecords(){
   if(!S.history.length){document.getElementById('recordsDisplay').textContent='No workouts yet.';return;}
-  const maxSU=Math.max(0,...S.history.map(h=>h.situps??0));
-  const maxPU=Math.max(0,...S.history.map(h=>h.pushups??0));
-  const maxSQ=Math.max(0,...S.history.map(h=>h.squats??0));
-  const maxD=Math.max(0,...S.history.map(h=>h.distance??0));
-  const maxP=Math.max(0,...S.history.filter(h=>h.protein!=null).map(h=>h.protein));
-  const recent=S.history.slice(-8).reverse();
-  const histHTML=recent.map(h=>{const parts=[h.situps!=null&&h.situps+'su',h.pushups!=null&&h.pushups+'pu',h.squats!=null&&h.squats+'sq',h.distance!=null&&h.distance+h.unit,h.protein!=null&&h.protein+'g prot',h.sleep!=null&&h.sleep+'h sleep'].filter(Boolean).join(' · ')||'check-in';return`<div class="history-item"><div><div style="font-size:12px;color:#fff">${h.date}</div><div style="font-size:10px;color:var(--text2)">${h.time||'--:--'} · ${parts}</div></div><div style="color:var(--cyan);font-size:13px;font-weight:600">+${h.xp}</div></div>`;}).join('');
-  document.getElementById('recordsDisplay').innerHTML=`<div>💪 Sit-ups: <span style="color:#fff">${maxSU}</span></div><div>💪 Push-ups: <span style="color:#fff">${maxPU}</span></div><div>💪 Squats: <span style="color:#fff">${maxSQ}</span></div><div>🏃 Run: <span style="color:#fff">${maxD}</span></div><div>🥩 Protein: <span style="color:#fff">${maxP}g</span></div><div>⚡ Sessions: <span style="color:#fff">${S.history.length}</span></div><div style="margin-top:8px;font-size:9px;letter-spacing:2px;color:var(--text2);text-transform:uppercase;margin-bottom:6px">Recent</div>${histHTML}`;
+  var maxSU=Math.max.apply(null,[0].concat(S.history.map(function(h){return h.situps!=null?h.situps:0;})));
+  var maxPU=Math.max.apply(null,[0].concat(S.history.map(function(h){return h.pushups!=null?h.pushups:0;})));
+  var maxSQ=Math.max.apply(null,[0].concat(S.history.map(function(h){return h.squats!=null?h.squats:0;})));
+  var maxD=Math.max.apply(null,[0].concat(S.history.map(function(h){return h.distance!=null?h.distance:0;})));
+  var maxP=Math.max.apply(null,[0].concat(S.history.filter(function(h){return h.protein!=null;}).map(function(h){return h.protein;})));
+  var recent=S.history.slice(-8).reverse();
+  var histHTML=recent.map(function(h){
+    var parts=[h.situps!=null&&h.situps+'su',h.pushups!=null&&h.pushups+'pu',h.squats!=null&&h.squats+'sq',h.distance!=null&&h.distance+(h.unit||'km'),h.protein!=null&&h.protein+'g prot',h.sleep!=null&&h.sleep+'h sleep'].filter(Boolean).join(' · ')||'check-in';
+    return'<div class="history-item"><div><div style="font-size:12px;color:#fff">'+h.date+'</div><div style="font-size:10px;color:var(--text2)">'+(h.time||'--:--')+' · '+parts+'</div></div><div style="color:var(--cyan);font-size:13px;font-weight:600">+'+h.xp+'</div></div>';
+  }).join('');
+  document.getElementById('recordsDisplay').innerHTML='<div>💪 Sit-ups: <span style="color:#fff">'+maxSU+'</span></div><div>💪 Push-ups: <span style="color:#fff">'+maxPU+'</span></div><div>💪 Squats: <span style="color:#fff">'+maxSQ+'</span></div><div>🏃 Run: <span style="color:#fff">'+maxD+'</span></div><div>🥩 Protein: <span style="color:#fff">'+maxP+'g</span></div><div>⚡ Sessions: <span style="color:#fff">'+S.history.length+'</span></div><div style="margin-top:8px;font-size:9px;letter-spacing:2px;color:var(--text2);text-transform:uppercase;margin-bottom:6px">Recent</div>'+histHTML;
 }
 
-let chart=null;
+var chart=null;
 function showChart(type,el){
-  document.querySelectorAll('.chart-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');
-  let filtered,data,label,color,title;
-  if(type==='combined'){filtered=S.history;data=filtered.map(h=>h.xp);label='XP';color='#00d4ff';title='XP Per Session';}
-  else if(type==='situps'){filtered=S.history.filter(h=>h.situps!=null);data=filtered.map(h=>h.situps);label='Sit-ups';color='#f0c040';title='Sit-ups';}
-  else if(type==='pushups'){filtered=S.history.filter(h=>h.pushups!=null);data=filtered.map(h=>h.pushups);label='Push-ups';color='#00ff88';title='Push-ups';}
-  else if(type==='squats'){filtered=S.history.filter(h=>h.squats!=null);data=filtered.map(h=>h.squats);label='Squats';color='#ff8844';title='Squats';}
-  else if(type==='run'){filtered=S.history.filter(h=>h.distance!=null);data=filtered.map(h=>h.distance);label='km';color='#aa88ff';title='Distance';}
-  else if(type==='sleep'){filtered=S.history.filter(h=>h.sleep!=null);data=filtered.map(h=>h.sleep);label='hrs';color='#4488ff';title='Sleep';}
-  else if(type==='weight'){filtered=S.history.filter(h=>h.weight!=null);data=filtered.map(h=>h.weight);label='kg';color='#ff6699';title='Weight';}
-  else if(type==='protein'){filtered=S.history.filter(h=>h.protein!=null);data=filtered.map(h=>h.protein);label='g';color='#f0c040';title='Protein (g)';}
-  const labels=filtered.map(h=>h.date.slice(4,10));
+  document.querySelectorAll('.chart-tab').forEach(function(t){t.classList.remove('active');});el.classList.add('active');
+  var filtered,data,label,color,title;
+  if(type==='combined'){filtered=S.history;data=filtered.map(function(h){return h.xp;});label='XP';color='#00d4ff';title='XP Per Session';}
+  else if(type==='situps'){filtered=S.history.filter(function(h){return h.situps!=null;});data=filtered.map(function(h){return h.situps;});label='Sit-ups';color='#f0c040';title='Sit-ups';}
+  else if(type==='pushups'){filtered=S.history.filter(function(h){return h.pushups!=null;});data=filtered.map(function(h){return h.pushups;});label='Push-ups';color='#00ff88';title='Push-ups';}
+  else if(type==='squats'){filtered=S.history.filter(function(h){return h.squats!=null;});data=filtered.map(function(h){return h.squats;});label='Squats';color='#ff8844';title='Squats';}
+  else if(type==='run'){filtered=S.history.filter(function(h){return h.distance!=null;});data=filtered.map(function(h){return h.distance;});label='km';color='#aa88ff';title='Distance';}
+  else if(type==='sleep'){filtered=S.history.filter(function(h){return h.sleep!=null;});data=filtered.map(function(h){return h.sleep;});label='hrs';color='#4488ff';title='Sleep';}
+  else if(type==='weight'){filtered=S.history.filter(function(h){return h.weight!=null;});data=filtered.map(function(h){return h.weight;});label='kg';color='#ff6699';title='Weight';}
+  else if(type==='protein'){filtered=S.history.filter(function(h){return h.protein!=null;});data=filtered.map(function(h){return h.protein;});label='g';color='#f0c040';title='Protein (g)';}
+  var labels=filtered.map(function(h){return h.date.slice(4,10);});
   document.getElementById('chartTitle').textContent=title;
   if(chart)chart.destroy();
-  const ctx=document.getElementById('mainChart').getContext('2d');
-  chart=new Chart(ctx,{type:'line',data:{labels:labels.length?labels:['No data'],datasets:[{label,data:data.length?data:[0],borderColor:color,backgroundColor:color+'22',borderWidth:2,pointRadius:3,pointBackgroundColor:color,tension:.3,fill:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#5a8fa8',font:{size:10},maxRotation:45},grid:{color:'rgba(0,212,255,0.05)'}},y:{ticks:{color:'#5a8fa8',font:{size:10}},grid:{color:'rgba(0,212,255,0.05)'}}}}});
+  var ctx=document.getElementById('mainChart').getContext('2d');
+  chart=new Chart(ctx,{type:'line',data:{labels:labels.length?labels:['No data'],datasets:[{label:label,data:data.length?data:[0],borderColor:color,backgroundColor:color+'22',borderWidth:2,pointRadius:3,pointBackgroundColor:color,tension:.3,fill:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#5a8fa8',font:{size:10},maxRotation:45},grid:{color:'rgba(0,212,255,0.05)'}},y:{ticks:{color:'#5a8fa8',font:{size:10}},grid:{color:'rgba(0,212,255,0.05)'}}}}});
 }
 
 function generateTips(){
-  const lv=S.level,next=lv+1;
-  const xpNeeded=totalXpForLevel(next)-S.xp;
-  const nextRank=getNextRank(lv);
-  const wKg=getLatestWeightKg();const p=S.profile||{};
-  const goal=wKg>0?getProteinGoal(wKg,p.heightCm||0,p.age||25,p.activityLevel||'active',true):null;
-  const tips=[];
-  tips.push(`<div class="tip-card"><span style="color:var(--cyan);margin-right:5px">⚡</span>Need <strong style="color:#fff">${xpNeeded.toLocaleString()} XP</strong> for Level ${next}.</div>`);
-  if(nextRank)tips.push(`<div class="tip-card"><span style="color:${nextRank.color};margin-right:5px">◆</span><strong style="color:${nextRank.color}">${nextRank.rank} Rank</strong> at Level ${nextRank.min} — ${nextRank.min-lv} level${nextRank.min-lv!==1?'s':''} away.</div>`);
-  tips.push(`<div class="tip-card"><span style="margin-right:5px">💪</span>${Math.ceil(xpNeeded)} sit-ups · ${Math.ceil(xpNeeded/1.2)} push-ups · ${Math.ceil(xpNeeded/1.5)} squats to level up.</div>`);
-  tips.push(`<div class="tip-card"><span style="margin-right:5px">🏃</span>Run <strong style="color:#fff">${(xpNeeded/28).toFixed(1)} km</strong> at sprint pace to reach Level ${next}.</div>`);
-  if(goal)tips.push(`<div class="tip-card"><span style="margin-right:5px">🥩</span>Today's protein goal: <strong style="color:var(--gold)">${goal}g</strong> (~${Math.round(goal/4)}g per meal × 4). Hit it for +30–40 XP.</div>`);
-  if(!S.lastSleep||S.lastSleep<7)tips.push(`<div class="tip-card"><span style="margin-right:5px">😴</span>Log <strong style="color:#fff">8h sleep</strong> for max VIT XP. Growth hormone peaks during deep sleep.</div>`);
-  if(S.quest&&!S.quest.complete)tips.push(`<div class="tip-card"><span style="margin-right:5px">⚔</span>Weekly Quest: <strong style="color:var(--gold)">${S.quest.name}</strong> — ${S.quest.progress}/${S.quest.target} ${S.quest.unit} done. +${S.quest.xpReward} XP on completion.</div>`);
+  var lv=S.level,next=lv+1,xpNeeded=totalXpForLevel(next)-S.xp,nextRank=getNextRank(lv);
+  var wKg=getLatestWeightKg(),p=S.profile||{};
+  var goal=wKg>0?getProteinGoal(wKg,p.heightCm||0,p.age||25,p.activityLevel||'active',true):null;
+  var tips=[];
+  tips.push('<div class="tip-card"><span style="color:var(--cyan);margin-right:5px">⚡</span>Need <strong style="color:#fff">'+xpNeeded.toLocaleString()+' XP</strong> for Level '+next+'.</div>');
+  if(nextRank)tips.push('<div class="tip-card"><span style="color:'+nextRank.color+';margin-right:5px">◆</span><strong style="color:'+nextRank.color+'">'+nextRank.rank+' Rank</strong> at Level '+nextRank.min+' — '+(nextRank.min-lv)+' level'+(nextRank.min-lv!==1?'s':'')+' away.</div>');
+  tips.push('<div class="tip-card"><span style="margin-right:5px">💪</span>'+Math.ceil(xpNeeded)+' sit-ups · '+Math.ceil(xpNeeded/1.2)+' push-ups · '+Math.ceil(xpNeeded/1.5)+' squats to level up.</div>');
+  tips.push('<div class="tip-card"><span style="margin-right:5px">🏃</span>Run <strong style="color:#fff">'+( xpNeeded/28).toFixed(1)+' km</strong> at sprint pace for Level '+next+'.</div>');
+  if(goal)tips.push('<div class="tip-card"><span style="margin-right:5px">🥩</span>Protein goal: <strong style="color:var(--gold)">'+goal+'g</strong> (~'+Math.round(goal/4)+'g × 4 meals). Hit it for +30–40 XP.</div>');
+  if(!S.lastSleep||S.lastSleep<7)tips.push('<div class="tip-card"><span style="margin-right:5px">😴</span>Log <strong style="color:#fff">8h sleep</strong> for max VIT XP.</div>');
+  if(S.quest&&!S.quest.complete)tips.push('<div class="tip-card"><span style="margin-right:5px">⚔</span>Quest: <strong style="color:var(--gold)">'+S.quest.name+'</strong> — '+S.quest.progress+'/'+S.quest.target+'. +'+S.quest.xpReward+' XP on finish.</div>');
   document.getElementById('tipsContainer').innerHTML=tips.join('');
 }
 
 // ── Form ──
-let feelVal='strong',pendingEntry=null;
-function setFeel(el){document.querySelectorAll('.feel-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');feelVal=el.dataset.val;}
+var feelVal='strong',pendingEntry=null;
+function setFeel(el){document.querySelectorAll('.feel-btn').forEach(function(b){b.classList.remove('active');});el.classList.add('active');feelVal=el.dataset.val;}
 function toggleSets(key){document.getElementById(key+'SetsWrap').classList.toggle('show',document.getElementById(key+'Sets').checked);}
-['suWeighted','puWeighted','sqWeighted'].forEach(id=>{const map={suWeighted:'suWeight',puWeighted:'puWeight',sqWeighted:'sqWeight'};document.getElementById(id).addEventListener('change',function(){document.getElementById(map[id]).style.display=this.checked?'inline-block':'none';});});
+['suWeighted','puWeighted','sqWeighted'].forEach(function(id){
+  var map={suWeighted:'suWeight',puWeighted:'puWeight',sqWeighted:'sqWeight'};
+  document.getElementById(id).addEventListener('change',function(){document.getElementById(map[id]).style.display=this.checked?'inline-block':'none';});
+});
 document.getElementById('distance').addEventListener('input',updatePaceBadge);
 document.getElementById('runTime').addEventListener('input',updatePaceBadge);
-document.getElementById('distUnit').addEventListener('change',()=>{updatePaceBadge();updateProteinAdvice();});
+document.getElementById('distUnit').addEventListener('change',function(){updatePaceBadge();updateProteinAdvice();});
+
 function updatePaceBadge(){
-  const d=parseFloat(document.getElementById('distance').value)||0,t=parseFloat(document.getElementById('runTime').value)||0,unit=document.getElementById('distUnit').value,pb=document.getElementById('paceBadge');
+  var d=parseFloat(document.getElementById('distance').value)||0,t=parseFloat(document.getElementById('runTime').value)||0,unit=document.getElementById('distUnit').value,pb=document.getElementById('paceBadge');
   if(!d||!t){pb.innerHTML='';return;}
-  const km=unit==='mi'?d*1.609:d,spd=km/(t/60);
-  let label,color,mult;
+  var km=unit==='mi'?d*1.609:d,spd=km/(t/60);
+  var label,color,mult;
   if(spd<6){label='🐢 Jog';color='#5a8fa8';mult='1.0×';}else if(spd<12){label='🏃 Run';color='#00d4ff';mult='1.4×';}else{label='⚡ Sprint';color='#f0c040';mult='2.0×';}
-  pb.innerHTML=`<span style="color:${color};font-size:11px">${label} ${mult}</span>`;
+  pb.innerHTML='<span style="color:'+color+';font-size:11px">'+label+' '+mult+'</span>';
 }
 
 function previewWorkout(){
-  const suRaw=document.getElementById('situps').value,puRaw=document.getElementById('pushups').value,sqRaw=document.getElementById('squats').value,distRaw=document.getElementById('distance').value,sleepRaw=document.getElementById('sleepHours').value,weightRaw=document.getElementById('weightInput').value,proteinRaw=document.getElementById('proteinInput').value;
-  const su=suRaw!==''?parseInt(suRaw):null,pu=puRaw!==''?parseInt(puRaw):null,sq=sqRaw!==''?parseInt(sqRaw):null,dist=distRaw!==''?parseFloat(distRaw):null,sleep=sleepRaw!==''?parseFloat(sleepRaw):null,wInput=weightRaw!==''?parseFloat(weightRaw):null,protein=proteinRaw!==''?parseFloat(proteinRaw):null;
+  var suRaw=document.getElementById('situps').value,puRaw=document.getElementById('pushups').value,sqRaw=document.getElementById('squats').value,distRaw=document.getElementById('distance').value,sleepRaw=document.getElementById('sleepHours').value,weightRaw=document.getElementById('weightInput').value,proteinRaw=document.getElementById('proteinInput').value;
+  var su=suRaw!==''?parseInt(suRaw):null,pu=puRaw!==''?parseInt(puRaw):null,sq=sqRaw!==''?parseInt(sqRaw):null,dist=distRaw!==''?parseFloat(distRaw):null,sleep=sleepRaw!==''?parseFloat(sleepRaw):null,wInput=weightRaw!==''?parseFloat(weightRaw):null,protein=proteinRaw!==''?parseFloat(proteinRaw):null;
   if(su===null&&pu===null&&sq===null&&dist===null&&sleep===null&&wInput===null&&protein===null){showDriveStatus('Nothing to log!','var(--red)');return;}
-  const unit=document.getElementById('distUnit').value,runT=parseFloat(document.getElementById('runTime').value)||0;
-  const suW=document.getElementById('suWeighted').checked?(parseFloat(document.getElementById('suWeight').value)||0):0;
-  const puW=document.getElementById('puWeighted').checked?(parseFloat(document.getElementById('puWeight').value)||0):0;
-  const sqW=document.getElementById('sqWeighted').checked?(parseFloat(document.getElementById('sqWeight').value)||0):0;
-  const suSetCount=document.getElementById('suSets').checked?(parseInt(document.getElementById('suSetCount').value)||null):null;
-  const suRepsSet=document.getElementById('suSets').checked?(parseInt(document.getElementById('suRepsSet').value)||null):null;
-  const puSetCount=document.getElementById('puSets').checked?(parseInt(document.getElementById('puSetCount').value)||null):null;
-  const puRepsSet=document.getElementById('puSets').checked?(parseInt(document.getElementById('puRepsSet').value)||null):null;
-  const sqSetCount=document.getElementById('sqSets').checked?(parseInt(document.getElementById('sqSetCount').value)||null):null;
-  const sqRepsSet=document.getElementById('sqSets').checked?(parseInt(document.getElementById('sqRepsSet').value)||null):null;
-  const wUnit=document.getElementById('weightUnit').value;
-  let xpGain=0,strXP=0,agiXP=0,endXP=0,vitXP=0;
-  if(su!==null){const x=Math.round(su*(1+suW*0.3));strXP+=x;xpGain+=x;}
-  if(pu!==null){const x=Math.round(pu*1.2*(1+puW*0.3));strXP+=x;xpGain+=x;}
-  if(sq!==null){const x=Math.round(sq*1.5*(1+sqW*0.3));strXP+=x;xpGain+=x;}
-  if(dist!==null&&dist>0){const km=unit==='mi'?dist*1.609:dist;let mult=1;if(runT>0){const spd=km/(runT/60);if(spd>=12)mult=2;else if(spd>=6)mult=1.4;}const x=Math.round(km*20*mult);agiXP+=Math.round(x*0.4);endXP+=Math.round(x*0.6);xpGain+=x;}
-  if(sleep!==null){const q=getSleepQuality(sleep);const x=Math.round(50*(q.pct/100));vitXP+=x;xpGain+=x;}
-  let proteinXP=0;
-  if(protein!==null){const wKg=wInput!=null?(wUnit==='lbs'?wInput*0.4536:wInput):getLatestWeightKg();const p2=S.profile||{};const pGoal=wKg>0?getProteinGoal(wKg,p2.heightCm||0,p2.age||25,p2.activityLevel||'active',su!==null||pu!==null||sq!==null||dist!==null):150;if(protein>=pGoal*1.1)proteinXP=40;else if(protein>=pGoal*0.9)proteinXP=30;else if(protein>=pGoal*0.7)proteinXP=15;xpGain+=proteinXP;}
-  let wBonus=0;if(wInput!==null&&S.weights&&S.weights.length>=1){const r7=S.history.slice(-7).filter(h=>h.situps!=null||h.pushups!=null||h.squats!=null||h.distance!=null).length;if(r7>=4){wBonus=feelVal==='strong'?30:feelVal==='normal'?20:10;}else{const prev=S.weights[S.weights.length-1].val;if(r7<=1&&(wInput-prev)>1)wBonus=-10;else wBonus=5;}}
+  var unit=document.getElementById('distUnit').value,runT=parseFloat(document.getElementById('runTime').value)||0;
+  var suW=document.getElementById('suWeighted').checked?(parseFloat(document.getElementById('suWeight').value)||0):0;
+  var puW=document.getElementById('puWeighted').checked?(parseFloat(document.getElementById('puWeight').value)||0):0;
+  var sqW=document.getElementById('sqWeighted').checked?(parseFloat(document.getElementById('sqWeight').value)||0):0;
+  var suSetCount=document.getElementById('suSets').checked?(parseInt(document.getElementById('suSetCount').value)||null):null;
+  var suRepsSet=document.getElementById('suSets').checked?(parseInt(document.getElementById('suRepsSet').value)||null):null;
+  var puSetCount=document.getElementById('puSets').checked?(parseInt(document.getElementById('puSetCount').value)||null):null;
+  var puRepsSet=document.getElementById('puSets').checked?(parseInt(document.getElementById('puRepsSet').value)||null):null;
+  var sqSetCount=document.getElementById('sqSets').checked?(parseInt(document.getElementById('sqSetCount').value)||null):null;
+  var sqRepsSet=document.getElementById('sqSets').checked?(parseInt(document.getElementById('sqRepsSet').value)||null):null;
+  var wUnit=document.getElementById('weightUnit').value;
+  var xpGain=0,strXP=0,agiXP=0,endXP=0,vitXP=0;
+  if(su!==null){var x1=Math.round(su*(1+suW*0.3));strXP+=x1;xpGain+=x1;}
+  if(pu!==null){var x2=Math.round(pu*1.2*(1+puW*0.3));strXP+=x2;xpGain+=x2;}
+  if(sq!==null){var x3=Math.round(sq*1.5*(1+sqW*0.3));strXP+=x3;xpGain+=x3;}
+  if(dist!==null&&dist>0){var km2=unit==='mi'?dist*1.609:dist;var mult2=1;if(runT>0){var spd2=km2/(runT/60);if(spd2>=12)mult2=2;else if(spd2>=6)mult2=1.4;}var x4=Math.round(km2*20*mult2);agiXP+=Math.round(x4*0.4);endXP+=Math.round(x4*0.6);xpGain+=x4;}
+  if(sleep!==null){var q2=getSleepQuality(sleep);var x5=Math.round(50*(q2.pct/100));vitXP+=x5;xpGain+=x5;}
+  var proteinXP=0;
+  if(protein!==null){var wKg3=wInput!=null?(wUnit==='lbs'?wInput*0.4536:wInput):getLatestWeightKg();var p3=S.profile||{};proteinXP=calcProteinXP(protein,wKg3,p3.heightCm||0,p3.age||25,p3.activityLevel||'active',su!==null||pu!==null||sq!==null||dist!==null);xpGain+=proteinXP;}
+  var wBonus=0;
+  if(wInput!==null&&S.weights&&S.weights.length>=1){var r7b=S.history.slice(-7).filter(function(h){return h.situps!=null||h.pushups!=null||h.squats!=null||h.distance!=null;}).length;if(r7b>=4){wBonus=feelVal==='strong'?30:feelVal==='normal'?20:10;}else{var prev=S.weights[S.weights.length-1].val;if(r7b<=1&&(wInput-prev)>1)wBonus=-10;else wBonus=5;}}
   xpGain=Math.max(0,xpGain+wBonus);
-  const bdDate=document.getElementById('backdateDate').value,bdTime=document.getElementById('backdateTime').value;
-  let entryDate,entryTime;
-  if(bdDate){const d=new Date(bdDate+'T'+(bdTime||'12:00'));entryDate=d.toDateString();entryTime=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}
-  else{const now=new Date();if(sleep!==null&&su===null&&pu===null&&sq===null&&dist===null){const y=new Date(now);y.setDate(y.getDate()-1);entryDate=y.toDateString();}else entryDate=now.toDateString();entryTime=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}
-  pendingEntry={su,pu,sq,dist,unit,sleep,wInput,wUnit,protein,xpGain,strXP,agiXP,endXP,vitXP,proteinXP,entryDate,entryTime,suW,puW,sqW,suSetCount,suRepsSet,puSetCount,puRepsSet,sqSetCount,sqRepsSet};
-  const rows=[];
-  if(su!==null)rows.push(`<div class="summary-row"><span class="summary-label">Sit-ups</span><span class="summary-val">${su}${suW?` @${suW}kg`:''}${suSetCount?` (${suSetCount}×${suRepsSet})`:''}  </span></div>`);
-  if(pu!==null)rows.push(`<div class="summary-row"><span class="summary-label">Push-ups</span><span class="summary-val">${pu}${puW?` @${puW}kg`:''}${puSetCount?` (${puSetCount}×${puRepsSet})`:''}</span></div>`);
-  if(sq!==null)rows.push(`<div class="summary-row"><span class="summary-label">Squats</span><span class="summary-val">${sq}${sqW?` @${sqW}kg`:''}${sqSetCount?` (${sqSetCount}×${sqRepsSet})`:''}</span></div>`);
-  if(dist!==null)rows.push(`<div class="summary-row"><span class="summary-label">Distance</span><span class="summary-val">${dist} ${unit}${runT?` in ${runT}m`:''}</span></div>`);
-  if(protein!==null)rows.push(`<div class="summary-row"><span class="summary-label">Protein</span><span class="summary-val">${protein}g${proteinXP>0?` (+${proteinXP} XP)`:''}</span></div>`);
-  if(sleep!==null)rows.push(`<div class="summary-row"><span class="summary-label">Sleep</span><span class="summary-val">${sleep}h — ${getSleepQuality(sleep).label}</span></div>`);
-  if(wInput!==null)rows.push(`<div class="summary-row"><span class="summary-label">Weight</span><span class="summary-val">${wInput} ${wUnit}</span></div>`);
-  rows.push(`<div class="summary-row"><span class="summary-label">Logged as</span><span class="summary-val">${entryDate} ${entryTime}</span></div>`);
+  var bdDate=document.getElementById('backdateDate').value,bdTime=document.getElementById('backdateTime').value;
+  var entryDate,entryTime;
+  if(bdDate){var bd=new Date(bdDate+'T'+(bdTime||'12:00'));entryDate=bd.toDateString();entryTime=bd.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}
+  else{var now=new Date();if(sleep!==null&&su===null&&pu===null&&sq===null&&dist===null){var y=new Date(now);y.setDate(y.getDate()-1);entryDate=y.toDateString();}else entryDate=now.toDateString();entryTime=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}
+  pendingEntry={su:su,pu:pu,sq:sq,dist:dist,unit:unit,sleep:sleep,wInput:wInput,wUnit:wUnit,protein:protein,xpGain:xpGain,strXP:strXP,agiXP:agiXP,endXP:endXP,vitXP:vitXP,proteinXP:proteinXP,entryDate:entryDate,entryTime:entryTime,suW:suW,puW:puW,sqW:sqW,suSetCount:suSetCount,suRepsSet:suRepsSet,puSetCount:puSetCount,puRepsSet:puRepsSet,sqSetCount:sqSetCount,sqRepsSet:sqRepsSet};
+  var rows=[];
+  if(su!==null)rows.push('<div class="summary-row"><span class="summary-label">Sit-ups</span><span class="summary-val">'+su+(suW?' @'+suW+'kg':'')+(suSetCount?' ('+suSetCount+'×'+suRepsSet+')':'')+'</span></div>');
+  if(pu!==null)rows.push('<div class="summary-row"><span class="summary-label">Push-ups</span><span class="summary-val">'+pu+(puW?' @'+puW+'kg':'')+(puSetCount?' ('+puSetCount+'×'+puRepsSet+')':'')+'</span></div>');
+  if(sq!==null)rows.push('<div class="summary-row"><span class="summary-label">Squats</span><span class="summary-val">'+sq+(sqW?' @'+sqW+'kg':'')+(sqSetCount?' ('+sqSetCount+'×'+sqRepsSet+')':'')+'</span></div>');
+  if(dist!==null)rows.push('<div class="summary-row"><span class="summary-label">Distance</span><span class="summary-val">'+dist+' '+unit+(runT?' in '+runT+'m':'')+'</span></div>');
+  if(protein!==null)rows.push('<div class="summary-row"><span class="summary-label">Protein</span><span class="summary-val">'+protein+'g'+(proteinXP>0?' (+'+proteinXP+' XP)':'')+'</span></div>');
+  if(sleep!==null)rows.push('<div class="summary-row"><span class="summary-label">Sleep</span><span class="summary-val">'+sleep+'h — '+getSleepQuality(sleep).label+'</span></div>');
+  if(wInput!==null)rows.push('<div class="summary-row"><span class="summary-label">Weight</span><span class="summary-val">'+wInput+' '+wUnit+'</span></div>');
+  rows.push('<div class="summary-row"><span class="summary-label">Logged as</span><span class="summary-val">'+entryDate+' '+entryTime+'</span></div>');
   document.getElementById('confirmSummary').innerHTML=rows.join('');
   document.getElementById('confirmXP').textContent='+'+xpGain+' XP';
   document.getElementById('confirmOverlay').classList.add('show');
@@ -960,51 +1022,51 @@ function closeConfirm(){document.getElementById('confirmOverlay').classList.remo
 
 function submitWorkout(){
   if(!pendingEntry)return;closeConfirm();
-  const{su,pu,sq,dist,unit,sleep,wInput,wUnit,protein,xpGain,strXP,agiXP,endXP,vitXP,entryDate,entryTime,suSetCount,suRepsSet,puSetCount,puRepsSet,sqSetCount,sqRepsSet}=pendingEntry;
-  const oldLevel=levelFromXP(S.xp),oldRank=getRank(oldLevel).rank;
-  S.xp+=xpGain;S.strXP+=strXP;S.agiXP+=agiXP;S.endXP+=endXP;S.vitXP+=vitXP;
-  if(wInput!==null){S.weights=S.weights||[];S.weights.push({val:wInput,unit:wUnit,date:entryDate});}
-  if(sleep!==null)S.lastSleep=sleep;
-  const entry={date:entryDate,time:entryTime,xp:xpGain};
-  if(su!==null){entry.situps=su;if(suSetCount){entry.suSets=suSetCount;entry.suReps=suRepsSet;}}
-  if(pu!==null){entry.pushups=pu;if(puSetCount){entry.puSets=puSetCount;entry.puReps=puRepsSet;}}
-  if(sq!==null){entry.squats=sq;if(sqSetCount){entry.sqSets=sqSetCount;entry.sqReps=sqRepsSet;}}
-  if(dist!==null){entry.distance=dist;entry.unit=unit;}
-  if(sleep!==null)entry.sleep=sleep;
-  if(wInput!==null){entry.weight=wInput;entry.wUnit=wUnit;}
-  if(protein!==null)entry.protein=protein;
-  // Stack onto existing entry for same date if exists
-  const existIdx=S.history.findIndex(h=>h.date===entryDate);
+  var e=pendingEntry;
+  var oldLevel=levelFromXP(S.xp),oldRank=getRank(oldLevel).rank;
+  S.xp+=e.xpGain;S.strXP+=e.strXP;S.agiXP+=e.agiXP;S.endXP+=e.endXP;S.vitXP+=e.vitXP;
+  if(e.wInput!==null){S.weights=S.weights||[];S.weights.push({val:e.wInput,unit:e.wUnit,date:e.entryDate});}
+  if(e.sleep!==null)S.lastSleep=e.sleep;
+  var entry={date:e.entryDate,time:e.entryTime,xp:e.xpGain};
+  if(e.su!==null){entry.situps=e.su;if(e.suSetCount){entry.suSets=e.suSetCount;entry.suReps=e.suRepsSet;}}
+  if(e.pu!==null){entry.pushups=e.pu;if(e.puSetCount){entry.puSets=e.puSetCount;entry.puReps=e.puRepsSet;}}
+  if(e.sq!==null){entry.squats=e.sq;if(e.sqSetCount){entry.sqSets=e.sqSetCount;entry.sqReps=e.sqRepsSet;}}
+  if(e.dist!==null){entry.distance=e.dist;entry.unit=e.unit;}
+  if(e.sleep!==null)entry.sleep=e.sleep;
+  if(e.wInput!==null){entry.weight=e.wInput;entry.wUnit=e.wUnit;}
+  if(e.protein!==null)entry.protein=e.protein;
+  // Stack onto same-day entry if exists
+  var existIdx=S.history.findIndex(function(h){return h.date===e.entryDate;});
   if(existIdx>=0){
-    const ex=S.history[existIdx];
+    var ex=S.history[existIdx];
     if(entry.situps!=null)ex.situps=(ex.situps||0)+entry.situps;
     if(entry.pushups!=null)ex.pushups=(ex.pushups||0)+entry.pushups;
     if(entry.squats!=null)ex.squats=(ex.squats||0)+entry.squats;
     if(entry.distance!=null)ex.distance=Math.round(((ex.distance||0)+entry.distance)*10)/10;
     if(entry.protein!=null)ex.protein=(ex.protein||0)+entry.protein;
-    if(entry.sleep!=null)ex.sleep=entry.sleep; // sleep replaces
-    if(entry.weight!=null)ex.weight=entry.weight; // weight replaces
+    if(entry.sleep!=null){ex.sleep=entry.sleep;S.lastSleep=entry.sleep;}
+    if(entry.weight!=null)ex.weight=entry.weight;
     ex.xp=(ex.xp||0)+entry.xp;
-    ex.time=entry.time; // update time to latest
+    ex.time=entry.time;
   } else {
     S.history.push(entry);
   }
-  S.history.sort((a,b)=>new Date(a.date+' '+a.time)-new Date(b.date+' '+b.time));
+  S.history.sort(function(a,b){return new Date(a.date+' '+a.time)-new Date(b.date+' '+b.time);});
   saveState();
-  const newLevel=levelFromXP(S.xp),newRank=getRank(newLevel).rank;
-  document.getElementById('xpGainNum').textContent='+'+xpGain+' XP';
-  const box=document.getElementById('xpGainBox');box.classList.add('show');setTimeout(()=>box.classList.remove('show'),4000);
+  var newLevel=levelFromXP(S.xp),newRank=getRank(newLevel).rank;
+  document.getElementById('xpGainNum').textContent='+'+e.xpGain+' XP';
+  var box=document.getElementById('xpGainBox');box.classList.add('show');setTimeout(function(){box.classList.remove('show');},4000);
   updateUI();clearForm();showTab('status');
-  if(newRank!==oldRank){const r=getRank(newLevel);document.getElementById('rankUpLabel').style.color=r.color;document.getElementById('rankUpLetter').textContent=r.rank;document.getElementById('rankUpLetter').style.color=r.color;document.getElementById('rankUpLetter').style.textShadow=`0 0 40px ${r.glow}`;document.getElementById('rankUpName').textContent=r.rank+' RANK ACHIEVED';document.getElementById('rankUpName').style.color=r.color;document.getElementById('rankUpOverlay').classList.add('show');}
+  if(newRank!==oldRank){var r=getRank(newLevel);document.getElementById('rankUpLabel').style.color=r.color;document.getElementById('rankUpLetter').textContent=r.rank;document.getElementById('rankUpLetter').style.color=r.color;document.getElementById('rankUpLetter').style.textShadow='0 0 40px '+r.glow;document.getElementById('rankUpName').textContent=r.rank+' RANK ACHIEVED';document.getElementById('rankUpName').style.color=r.color;document.getElementById('rankUpOverlay').classList.add('show');}
   else if(newLevel>oldLevel){document.getElementById('levelUpNum').textContent=newLevel;document.getElementById('levelUpTitle').textContent=getTitle(newLevel);document.getElementById('levelUpOverlay').classList.add('show');}
   pendingEntry=null;
 }
 
 function clearForm(){
-  ['situps','pushups','squats','distance','runTime','sleepHours','weightInput','suWeight','puWeight','sqWeight','backdateDate','backdateTime','proteinInput','suSetCount','suRepsSet','puSetCount','puRepsSet','sqSetCount','sqRepsSet'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  ['suWeighted','puWeighted','sqWeighted','suSets','puSets','sqSets'].forEach(id=>{const el=document.getElementById(id);if(el)el.checked=false;});
-  ['suWeight','puWeight','sqWeight'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
-  ['suSetsWrap','puSetsWrap','sqSetsWrap'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('show');});
+  ['situps','pushups','squats','distance','runTime','sleepHours','weightInput','suWeight','puWeight','sqWeight','backdateDate','backdateTime','proteinInput','suSetCount','suRepsSet','puSetCount','puRepsSet','sqSetCount','sqRepsSet'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  ['suWeighted','puWeighted','sqWeighted','suSets','puSets','sqSets'].forEach(function(id){var el=document.getElementById(id);if(el)el.checked=false;});
+  ['suWeight','puWeight','sqWeight'].forEach(function(id){var el=document.getElementById(id);if(el)el.style.display='none';});
+  ['suSetsWrap','puSetsWrap','sqSetsWrap'].forEach(function(id){var el=document.getElementById(id);if(el)el.classList.remove('show');});
   document.getElementById('paceBadge').innerHTML='';
   document.getElementById('proteinAdviceBox').classList.remove('show');
 }
@@ -1012,23 +1074,49 @@ function clearForm(){
 function closeLevelUp(){document.getElementById('levelUpOverlay').classList.remove('show');}
 function closeRankUp(){document.getElementById('rankUpOverlay').classList.remove('show');}
 
-// ── Settings ──
-let pendingDeleteFn=null;
-function showCustomClear(){const p=document.getElementById('customClearPanel');p.style.display=p.style.display==='none'?'block':'none';}
-function clearPeriod(days){const cutoff=new Date();cutoff.setDate(cutoff.getDate()-days);pendingDeleteFn=()=>{S.history=S.history.filter(h=>new Date(h.date)<cutoff);rebuildXP();saveState();updateUI();};document.getElementById('deleteMsg').textContent=`Delete all entries from the last ${days} days?`;document.getElementById('deleteOverlay').classList.add('show');}
-function clearCustomRange(){const from=document.getElementById('clearFrom').value,to=document.getElementById('clearTo').value;if(!from||!to){showDriveStatus('Pick both dates','var(--red)');return;}const f=new Date(from),t=new Date(to);t.setHours(23,59,59);pendingDeleteFn=()=>{S.history=S.history.filter(h=>{const d=new Date(h.date);return d<f||d>t;});rebuildXP();saveState();updateUI();};document.getElementById('deleteMsg').textContent=`Delete entries from ${from} to ${to}?`;document.getElementById('deleteOverlay').classList.add('show');}
-function confirmFullReset(){pendingDeleteFn=()=>{S={...DEFAULT_STATE};saveState();updateUI();};document.getElementById('deleteMsg').textContent='Permanently delete ALL data and reset to Level 1?';document.getElementById('deleteOverlay').classList.add('show');}
+// ── Delete / Reset ──
+var pendingDeleteFn=null;
+function showCustomClear(){var p=document.getElementById('customClearPanel');p.style.display=p.style.display==='none'?'block':'none';}
+function clearPeriod(days){
+  var cutoff=new Date();cutoff.setDate(cutoff.getDate()-days);
+  pendingDeleteFn=function(){S.history=S.history.filter(function(h){return new Date(h.date)<cutoff;});rebuildXP();saveState();updateUI();};
+  document.getElementById('deleteMsg').textContent='Delete all entries from the last '+days+' days?';
+  document.getElementById('deleteOverlay').classList.add('show');
+}
+function clearCustomRange(){
+  var from=document.getElementById('clearFrom').value,to=document.getElementById('clearTo').value;
+  if(!from||!to){showDriveStatus('Pick both dates','var(--red)');return;}
+  var f=new Date(from),t=new Date(to);t.setHours(23,59,59);
+  pendingDeleteFn=function(){S.history=S.history.filter(function(h){var d=new Date(h.date);return d<f||d>t;});rebuildXP();saveState();updateUI();};
+  document.getElementById('deleteMsg').textContent='Delete entries from '+from+' to '+to+'?';
+  document.getElementById('deleteOverlay').classList.add('show');
+}
+function confirmFullReset(){
+  pendingDeleteFn=function(){S=Object.assign({},DEFAULT_STATE);saveState();updateUI();};
+  document.getElementById('deleteMsg').textContent='Permanently delete ALL data and reset to Level 1?';
+  document.getElementById('deleteOverlay').classList.add('show');
+}
 function executeDelete(){if(pendingDeleteFn){pendingDeleteFn();pendingDeleteFn=null;}closeDelete();}
 function closeDelete(){document.getElementById('deleteOverlay').classList.remove('show');}
-function rebuildXP(){S.xp=0;S.strXP=0;S.agiXP=0;S.endXP=0;S.vitXP=0;for(const h of S.history){S.xp+=h.xp||0;if(h.situps!=null)S.strXP+=Math.round(h.situps);if(h.pushups!=null)S.strXP+=Math.round(h.pushups*1.2);if(h.squats!=null)S.strXP+=Math.round(h.squats*1.5);if(h.distance!=null){const x=Math.round((h.unit==='mi'?h.distance*1.609:h.distance)*20);S.agiXP+=Math.round(x*0.4);S.endXP+=Math.round(x*0.6);}if(h.sleep!=null)S.vitXP+=Math.round(50*(getSleepQuality(h.sleep).pct/100));}}
+function rebuildXP(){
+  S.xp=0;S.strXP=0;S.agiXP=0;S.endXP=0;S.vitXP=0;
+  S.history.forEach(function(h){
+    S.xp+=h.xp||0;
+    if(h.situps!=null)S.strXP+=Math.round(h.situps);
+    if(h.pushups!=null)S.strXP+=Math.round(h.pushups*1.2);
+    if(h.squats!=null)S.strXP+=Math.round(h.squats*1.5);
+    if(h.distance!=null){var x=Math.round((h.unit==='mi'?h.distance*1.609:h.distance)*20);S.agiXP+=Math.round(x*0.4);S.endXP+=Math.round(x*0.6);}
+    if(h.sleep!=null)S.vitXP+=Math.round(50*(getSleepQuality(h.sleep).pct/100));
+  });
+}
 
 function showTab(name){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
+  document.querySelectorAll('.nav button').forEach(function(b){b.classList.remove('active');});
   document.getElementById('tab-'+name).classList.add('active');
-  const idx={status:0,log:1,quests:2,stats:3,tips:4,settings:5}[name];
+  var idx={status:0,log:1,quests:2,stats:3,tips:4,settings:5}[name];
   document.querySelectorAll('.nav button')[idx].classList.add('active');
-  if(name==='stats')setTimeout(()=>showChart('combined',document.querySelector('.chart-tab.active')),50);
+  if(name==='stats')setTimeout(function(){showChart('combined',document.querySelector('.chart-tab.active'));},50);
 }
 
 S=loadLocalState();
