@@ -738,8 +738,9 @@ function buildGuidance(){
     var avg=Math.round(recent.reduce(function(a,e){return a+(e[key]||0);},0)/recent.length);
     var trend=recent[recent.length-1][key]-recent[0][key];
     var name=key==='situps'?'Sit-ups':key==='pushups'?'Push-ups':'Squats';
-    var sD=recent.filter(function(e){return e[key+'Sets']&&e[key+'Reps'];});
-    var aReps=sD.length?Math.round(sD.reduce(function(a,e){return a+e[key+'Reps'];},0)/sD.length):Math.round(avg/3);
+    var sD=recent.filter(function(e){return e[key+'Sets']&&e[key];});
+    // True avg reps/set = total reps done ÷ total sets done (not stored reps/set target)
+    var aReps=sD.length?Math.round(sD.reduce(function(a,e){return a+e[key];},0)/sD.reduce(function(a,e){return a+e[key+'Sets'];},0)):Math.round(avg/3);
     var aSets=sD.length?Math.round(sD.reduce(function(a,e){return a+e[key+'Sets'];},0)/sD.length):3;
     var trendNote=trend>10?'📈 Up '+trend+' reps — great progress!':trend<-5?'📉 Declining — add a rest day.':'➡ Steady. Increase volume.';
     var tip=avg<20?'Slow the eccentric to 3s for more activation.':avg<50?'Add a 4th set to increase volume.':'Progress to a harder variation.';
@@ -803,16 +804,17 @@ function showRecap(){
   var suTrend=suArr.length>=2?suArr[suArr.length-1].situps-suArr[0].situps:null;
   var puTrend=puArr.length>=2?puArr[puArr.length-1].pushups-puArr[0].pushups:null;
   var sqTrend=sqArr.length>=2?sqArr[sqArr.length-1].squats-sqArr[0].squats:null;
-  // Sets/reps data
-  var puSD=h.filter(function(e){return e.puSets&&e.puReps;});
-  var suSD=h.filter(function(e){return e.suSets&&e.suReps;});
-  var sqSD=h.filter(function(e){return e.sqSets&&e.sqReps;});
+  // Sets/reps data — use total reps ÷ total sets for true avg reps/set (not stored reps/set which may be target not actual)
+  var puSD=h.filter(function(e){return e.puSets&&e.pushups;});
+  var suSD=h.filter(function(e){return e.suSets&&e.situps;});
+  var sqSD=h.filter(function(e){return e.sqSets&&e.squats;});
+  // avgReps = total reps done / total sets done across logged sessions
   var avgPuSets=puSD.length?Math.round(puSD.reduce(function(a,e){return a+e.puSets;},0)/puSD.length):null;
-  var avgPuReps=puSD.length?Math.round(puSD.reduce(function(a,e){return a+e.puReps;},0)/puSD.length):null;
+  var avgPuReps=puSD.length?Math.round(puSD.reduce(function(a,e){return a+e.pushups;},0)/puSD.reduce(function(a,e){return a+e.puSets;},0)):null;
   var avgSuSets=suSD.length?Math.round(suSD.reduce(function(a,e){return a+e.suSets;},0)/suSD.length):null;
-  var avgSuReps=suSD.length?Math.round(suSD.reduce(function(a,e){return a+e.suReps;},0)/suSD.length):null;
+  var avgSuReps=suSD.length?Math.round(suSD.reduce(function(a,e){return a+e.situps;},0)/suSD.reduce(function(a,e){return a+e.suSets;},0)):null;
   var avgSqSets=sqSD.length?Math.round(sqSD.reduce(function(a,e){return a+e.sqSets;},0)/sqSD.length):null;
-  var avgSqReps=sqSD.length?Math.round(sqSD.reduce(function(a,e){return a+e.sqReps;},0)/sqSD.length):null;
+  var avgSqReps=sqSD.length?Math.round(sqSD.reduce(function(a,e){return a+e.squats;},0)/sqSD.reduce(function(a,e){return a+e.sqSets;},0)):null;
   var weeklyPuSets=avgPuSets?avgPuSets*daysLogged:null;
   var weeklySuSets=avgSuSets?avgSuSets*daysLogged:null;
   var weeklySqSets=avgSqSets?avgSqSets*daysLogged:null;
