@@ -99,6 +99,16 @@ select{background:var(--panel2);border:1px solid var(--border);color:#fff;paddin
 .edit-entry-item{background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:10px;margin-bottom:8px}
 .recap-nav-dot{flex:1;height:3px;border-radius:2px;background:var(--border);transition:background .2s}
 .data-note{font-size:10px;color:var(--text2);font-style:italic;margin-bottom:8px}
+.ms-unlock-overlay{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:200;display:none;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:24px}
+.ms-unlock-overlay.show{display:flex}
+.ms-unlock-box{background:var(--panel);border:2px solid var(--gold);border-radius:8px;padding:28px 22px;width:100%;max-width:340px;position:relative;overflow:hidden}
+.ms-unlock-box::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(240,192,64,0.12),transparent 70%);pointer-events:none}
+.ms-unlock-shine{position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(240,192,64,0.08),transparent);animation:msShine 1.8s ease-in-out 0.3s forwards}
+@keyframes msShine{0%{left:-100%}100%{left:150%}}
+.ms-notif-banner{background:rgba(240,192,64,0.08);border:1px solid rgba(240,192,64,0.4);border-radius:4px;padding:10px 12px;margin-bottom:8px;position:relative;overflow:hidden}
+.ms-notif-banner-urgent{background:rgba(255,100,0,0.08);border:1px solid rgba(255,150,0,0.45)}
+.ms-notif-dismiss{position:absolute;top:6px;right:8px;background:none;border:none;color:var(--text2);font-size:12px;cursor:pointer;padding:2px 6px;line-height:1}
+.ms-notif-dismiss:hover{color:#fff}
 </style>
 </head>
 <body>
@@ -138,7 +148,7 @@ select{background:var(--panel2);border:1px solid var(--border);color:#fff;paddin
     </div>
   </div>
   <div id="recapBtnWrap" style="display:none"><button class="btn-gold" onclick="showRecap()">⚡ RECAP REPORT</button></div>
-  <div id="milestoneNotifWrap" style="display:none" class="panel" style="border-color:rgba(240,192,64,0.4);background:rgba(240,192,64,0.06)">
+  <div id="milestoneNotifWrap" style="display:none;border-color:rgba(240,192,64,0.4);background:rgba(240,192,64,0.06)" class="panel">
     <div class="panel-title" style="color:var(--gold)">🏆 Reward Quest Progress</div>
     <div id="milestoneNotifContent"></div>
   </div>
@@ -332,6 +342,22 @@ select{background:var(--panel2);border:1px solid var(--border);color:#fff;paddin
 </div>
 </div>
 
+<!-- MILESTONE UNLOCK OVERLAY -->
+<div class="ms-unlock-overlay" id="msUnlockOverlay">
+  <div class="ms-unlock-box">
+    <div class="ms-unlock-shine"></div>
+    <div style="font-size:10px;letter-spacing:4px;color:var(--gold);text-transform:uppercase;margin-bottom:10px">🏆 Reward Quest Unlocked</div>
+    <div style="font-size:28px;font-weight:900;color:#fff;margin-bottom:8px;line-height:1.2" id="msUnlockName">Plank Challenge</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:14px" id="msUnlockWhy"></div>
+    <div style="background:rgba(240,192,64,0.1);border:1px solid rgba(240,192,64,0.3);border-radius:4px;padding:10px;margin-bottom:16px">
+      <div style="font-size:10px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;margin-bottom:5px">First Completion Bonus</div>
+      <div style="font-size:22px;font-weight:900;color:var(--gold)" id="msUnlockBonus">+100 XP</div>
+    </div>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:16px">Find it in the <strong style="color:#fff">Quests tab</strong> → Reward Quests</div>
+    <button onclick="closeMsUnlock()" style="width:100%;padding:11px;background:rgba(240,192,64,0.15);border:1px solid var(--gold);color:var(--gold);font-size:11px;letter-spacing:3px;text-transform:uppercase;border-radius:4px;cursor:pointer;font-weight:600">VIEW QUEST ▶</button>
+  </div>
+</div>
+
 <!-- OVERLAYS -->
 <div class="overlay" id="levelUpOverlay">
   <div style="font-size:11px;letter-spacing:6px;color:var(--cyan);text-transform:uppercase;margin-bottom:6px">Level Up</div>
@@ -395,7 +421,7 @@ async function saveToDrive(){if(!accessToken||!driveFileId)return;await fetch('h
 async function saveState(){try{localStorage.setItem('slw_v4',JSON.stringify(S));}catch(e){}if(!accessToken){showDriveStatus('Saved locally','var(--text2)');return;}if(savePending)return;savePending=true;showDriveStatus('⟳ Saving...');try{await saveToDrive();showDriveStatus('✓ Saved');}catch(e){showDriveStatus('Save failed','var(--red)');}savePending=false;}
 
 // ── State ──
-var DEFAULT_STATE={xp:0,level:1,strXP:0,agiXP:0,endXP:0,vitXP:0,history:[],weights:[],lastSleep:null,profile:{heightCm:0,activityLevel:'active',age:0,gender:''},quest:null,questLog:[],questRerolled:false,milestones:{plank:{unlocked:false,firstBonusGiven:false,weekStart:null,completions:0},diamond:{unlocked:false,firstBonusGiven:false,weekStart:null,completions:0},pauseSqt:{unlocked:false,firstBonusGiven:false,weekStart:null,completions:0}},milestoneNotifications:[]};
+var DEFAULT_STATE={xp:0,level:1,strXP:0,agiXP:0,endXP:0,vitXP:0,history:[],weights:[],lastSleep:null,profile:{heightCm:0,activityLevel:'active',age:0,gender:''},quest:null,questLog:[],questRerolled:false,milestones:{plank:{unlocked:false,firstBonusGiven:false,weekStart:null,completions:0},diamond:{unlocked:false,firstBonusGiven:false,weekStart:null,completions:0},pauseSqt:{unlocked:false,firstBonusGiven:false,weekStart:null,completions:0}},milestoneNotifications:[],msUnlockQueue:[]};
 var S=Object.assign({},DEFAULT_STATE);
 function loadLocalState(){try{var r=localStorage.getItem('slw_v4');if(r)return Object.assign({},DEFAULT_STATE,JSON.parse(r));}catch(e){}return Object.assign({},DEFAULT_STATE);}
 
@@ -495,7 +521,11 @@ var MILESTONE_DEFS={
 
 var MULTIPLIERS=[1,1.5,2.25,3.375];
 
-function getMilestone(id){return S.milestones&&S.milestones[id]?S.milestones[id]:{unlocked:false,firstBonusGiven:false,weekStart:null,completions:0};}
+function getMilestone(id){
+  if(!S.milestones)S.milestones={};
+  if(!S.milestones[id])S.milestones[id]={unlocked:false,firstBonusGiven:false,weekStart:null,completions:0};
+  return S.milestones[id];
+}
 function saveMilestone(id,data){if(!S.milestones)S.milestones={};S.milestones[id]=data;}
 
 function getBestSingleSession(key){
@@ -503,36 +533,100 @@ function getBestSingleSession(key){
   return Math.max.apply(null,[0].concat(S.history.map(function(h){return h[key]!=null?h[key]:0;})));
 }
 
+// Build a dynamic, context-aware notification message
+function buildMSNotifMsg(def,best,type){
+  var remaining=def.triggerAmt-best;
+  var exerciseName=def.trigger==='situps'?'sit-ups':def.trigger==='pushups'?'push-ups':'squats';
+  var questName=def.name;
+  if(type==='75'){
+    return 'Reward Quest Nearly Unlocked — log '+remaining+' more '+exerciseName+' in a single session to unlock the '+questName;
+  } else {
+    return 'Almost there — '+remaining+' more '+exerciseName+' to unlock your '+questName;
+  }
+}
+
 function checkMilestoneUnlocks(entry){
-  var notifs=[];
+  if(!S.milestoneNotifications)S.milestoneNotifications=[];
+  if(!S.msUnlockQueue)S.msUnlockQueue=[];
   Object.keys(MILESTONE_DEFS).forEach(function(id){
     var def=MILESTONE_DEFS[id];
     var ms=getMilestone(id);
     if(ms.unlocked)return;
-    var best=Math.max(getBestSingleSession(def.trigger),entry[def.trigger]||0);
-    var pct=best/def.triggerAmt;
+    // Use only the current session's reps as the trigger (single-session requirement)
+    var sessionReps=entry[def.trigger]||0;
+    var allTimeBest=Math.max(getBestSingleSession(def.trigger),sessionReps);
+    var pct=allTimeBest/def.triggerAmt;
     if(pct>=1){
       ms.unlocked=true;saveMilestone(id,ms);
-      notifs.push({type:'unlock',id:id,name:def.name});
+      // Queue the full-screen unlock overlay
+      var alreadyQueued=S.msUnlockQueue.some(function(q){return q.id===id;});
+      if(!alreadyQueued)S.msUnlockQueue.push({id:id,name:def.name,why:def.why,firstBonus:def.firstBonus});
+      // Remove old 75/90 notifs for this quest now it's unlocked
+      S.milestoneNotifications=S.milestoneNotifications.filter(function(n){return !(n.id===id&&(n.type==='75'||n.type==='90'));});
+      // Add unlock banner notif (dismissable, shows on status tab)
+      var alreadyUnlock=S.milestoneNotifications.some(function(n){return n.id===id&&n.type==='unlock';});
+      if(!alreadyUnlock)S.milestoneNotifications.push({id:id,type:'unlock',name:def.name,dismissed:false});
     } else if(pct>=0.9){
-      notifs.push({type:'90',id:id,msg:def.notif90});
+      // Upgrade 75 → 90 if exists, else add 90
+      S.milestoneNotifications=S.milestoneNotifications.filter(function(n){return !(n.id===id&&n.type==='75');});
+      var exists90=S.milestoneNotifications.some(function(n){return n.id===id&&n.type==='90';});
+      if(!exists90){
+        var msg=buildMSNotifMsg(def,allTimeBest,'90');
+        S.milestoneNotifications.push({id:id,type:'90',msg:msg,best:allTimeBest,amt:def.triggerAmt,dismissed:false});
+      } else {
+        // Update the remaining count
+        S.milestoneNotifications.forEach(function(n){if(n.id===id&&n.type==='90'){n.msg=buildMSNotifMsg(def,allTimeBest,'90');n.best=allTimeBest;}});
+      }
     } else if(pct>=0.75){
-      notifs.push({type:'75',id:id,msg:def.notif75});
+      var exists75=S.milestoneNotifications.some(function(n){return n.id===id&&n.type==='75';});
+      if(!exists75){
+        var msg=buildMSNotifMsg(def,allTimeBest,'75');
+        S.milestoneNotifications.push({id:id,type:'75',msg:msg,best:allTimeBest,amt:def.triggerAmt,dismissed:false});
+      } else {
+        S.milestoneNotifications.forEach(function(n){if(n.id===id&&n.type==='75'){n.msg=buildMSNotifMsg(def,allTimeBest,'75');n.best=allTimeBest;}});
+      }
     }
   });
-  if(!S.milestoneNotifications)S.milestoneNotifications=[];
-  notifs.forEach(function(n){
-    var exists=S.milestoneNotifications.some(function(e){return e.id===n.id&&e.type===n.type;});
-    if(!exists)S.milestoneNotifications.push(n);
-  });
+}
+
+// ── Milestone Unlock Overlay ──
+var msUnlockQueue_local=[];
+function processMSUnlockQueue(){
+  if(!S.msUnlockQueue||!S.msUnlockQueue.length)return;
+  msUnlockQueue_local=S.msUnlockQueue.slice();
+  S.msUnlockQueue=[];
+  saveState();
+  showNextMsUnlock();
+}
+function showNextMsUnlock(){
+  if(!msUnlockQueue_local.length){document.getElementById('msUnlockOverlay').classList.remove('show');return;}
+  var item=msUnlockQueue_local.shift();
+  document.getElementById('msUnlockName').textContent=item.name;
+  document.getElementById('msUnlockWhy').textContent=item.why;
+  document.getElementById('msUnlockBonus').textContent='+'+item.firstBonus+' XP — First Completion Only';
+  // Re-animate shine
+  var shine=document.querySelector('.ms-unlock-shine');
+  if(shine){shine.style.animation='none';void shine.offsetWidth;shine.style.animation='msShine 1.8s ease-in-out 0.3s forwards';}
+  document.getElementById('msUnlockOverlay').classList.add('show');
+}
+function closeMsUnlock(){
+  document.getElementById('msUnlockOverlay').classList.remove('show');
+  setTimeout(function(){
+    if(msUnlockQueue_local.length){showNextMsUnlock();}
+    else{showTab('quests');}
+  },200);
+}
+
+function dismissMSNotif(id,type){
+  S.milestoneNotifications=S.milestoneNotifications.filter(function(n){return !(n.id===id&&n.type===type);});
+  saveState();renderMilestoneNotifications();
 }
 
 function getMilestoneRecommendation(id){
   var def=MILESTONE_DEFS[id];
   if(def.inputType!=='setsreps')return null;
-  var avg=0;
   var arr=S.history.filter(function(h){return h[def.trigger]!=null;});
-  if(arr.length)avg=Math.round(arr.reduce(function(a,h){return a+h[def.trigger];},0)/arr.length);
+  var avg=arr.length?Math.round(arr.reduce(function(a,h){return a+h[def.trigger];},0)/arr.length):0;
   var sets=3,reps=5;
   if(avg>=60){sets=4;reps=10;}
   else if(avg>=40){sets=3;reps=8;}
@@ -563,7 +657,6 @@ function completeMilestoneQuest(id,inputVal){
   var def=MILESTONE_DEFS[id];
   var ms=getMilestone(id);
   if(!ms.unlocked)return;
-  // Reset window if expired
   if(!isInWindow(ms)){ms.weekStart=new Date().toISOString();ms.completions=0;}
   if(ms.completions>=def.maxCompletions){showDriveStatus('Max completions reached this week','var(--text2)');return;}
   var xp=getMilestoneXP(id,inputVal,ms.completions);
@@ -572,10 +665,10 @@ function completeMilestoneQuest(id,inputVal){
   ms.completions++;
   S.xp+=xp;
   if(!S.questLog)S.questLog=[];
-  S.questLog.unshift({name:def.name+(isFirst?' 🌟 FIRST!':''),xp:xp,week:getWeekKey()});
+  S.questLog.unshift({name:def.name+(isFirst?' 🌟':''),xp:xp,week:getWeekKey()});
   saveMilestone(id,ms);
   saveState();updateUI();renderMilestoneQuests();
-  showDriveStatus('+'+(xp)+' XP'+(isFirst?' +'+def.firstBonus+' First Completion Bonus!':''),'var(--gold)');
+  showDriveStatus('+'+xp+' XP'+(isFirst?' (incl. +'+def.firstBonus+' first completion bonus)':''),'var(--gold)');
 }
 
 function renderMilestoneQuests(){
@@ -595,7 +688,7 @@ function renderMilestoneQuests(){
     var daysLeft=0;
     if(inWindow&&ms.weekStart){daysLeft=Math.ceil(7-((Date.now()-new Date(ms.weekStart).getTime())/(1000*60*60*24)));}
     var rec=getMilestoneRecommendation(id);
-    html+='<div class="quest-card" style="border-color:rgba(240,192,64,0.4);margin-bottom:10px">';
+    html+='<div class="quest-card" style="border-color:rgba(240,192,64,0.45);margin-bottom:10px">';
     html+='<div style="font-size:11px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:6px">🏆 '+def.name+'</div>';
     html+='<div style="font-size:12px;color:var(--text2);margin-bottom:6px;line-height:1.5">💡 '+def.why+'</div>';
     if(inWindow){
@@ -603,7 +696,7 @@ function renderMilestoneQuests(){
       html+='<span>Completions: <strong style="color:#fff">'+completions+'/'+def.maxCompletions+'</strong></span>';
       html+='<span style="color:var(--gold)">'+daysLeft+'d left · '+Math.round(nextMult*100)+'% XP</span></div>';
     } else {
-      html+='<div style="font-size:11px;color:var(--text2);margin-bottom:6px">Available now · Completes up to '+def.maxCompletions+'× this week</div>';
+      html+='<div style="font-size:11px;color:var(--text2);margin-bottom:6px">Available now · Complete up to '+def.maxCompletions+'× this week</div>';
     }
     if(remaining>0||!inWindow){
       if(def.inputType==='duration'){
@@ -611,28 +704,27 @@ function renderMilestoneQuests(){
         html+='<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">';
         def.options.forEach(function(opt){
           var xp=getMilestoneXP(id,opt.value,completions);
-          html+='<button onclick="completeMilestoneQuest(\''+id+'\','+opt.value+')" style="flex:1;min-width:60px;padding:7px 4px;background:rgba(240,192,64,0.1);border:1px solid var(--gold);color:var(--gold);font-size:10px;border-radius:4px;cursor:pointer;text-align:center">'+opt.label+'<br><span style="font-size:9px;color:var(--text2)">+'+xp+' XP</span></button>';
+          html+='<button onclick="completeMilestoneQuest(\''+id+'\','+opt.value+')" style="flex:1;min-width:60px;padding:8px 4px;background:rgba(240,192,64,0.1);border:1px solid var(--gold);color:var(--gold);font-size:10px;border-radius:4px;cursor:pointer;text-align:center;line-height:1.5">'+opt.label+'<br><span style="font-size:9px;color:var(--text2)">+'+xp+' XP</span></button>';
         });
         html+='</div>';
       } else {
         var xpPer=Math.round(def.baseXPPerRep*nextMult*10)/10;
         html+='<div style="font-size:10px;color:var(--text2);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px">Log Completion</div>';
-        if(rec)html+='<div style="font-size:11px;color:var(--cyan);margin-bottom:6px">Suggested start: '+rec.sets+' sets × '+rec.reps+' reps</div>';
+        if(rec)html+='<div style="font-size:11px;color:var(--cyan);margin-bottom:6px">Suggested: '+rec.sets+' sets × '+rec.reps+' reps</div>';
         html+='<div style="display:flex;gap:6px;margin-bottom:8px">';
         html+='<div style="flex:1"><div style="font-size:9px;color:var(--text2);margin-bottom:3px;text-transform:uppercase">Sets</div><input type="number" id="ms_'+id+'_sets" placeholder="3" min="1" max="20" style="width:100%;font-size:13px;padding:6px 8px;background:var(--panel2);border:1px solid var(--border);color:#fff;border-radius:4px;outline:none"></div>';
         html+='<div style="flex:1"><div style="font-size:9px;color:var(--text2);margin-bottom:3px;text-transform:uppercase">Reps/set</div><input type="number" id="ms_'+id+'_reps" placeholder="5" min="1" style="width:100%;font-size:13px;padding:6px 8px;background:var(--panel2);border:1px solid var(--border);color:#fff;border-radius:4px;outline:none"></div>';
         html+='</div>';
-        html+='<div style="font-size:11px;color:var(--text2);margin-bottom:6px">'+xpPer+' XP per rep ('+Math.round(nextMult*100)+'% multiplier)</div>';
+        html+='<div style="font-size:11px;color:var(--text2);margin-bottom:6px">'+xpPer+' XP per rep · '+Math.round(nextMult*100)+'% multiplier</div>';
         html+='<button onclick="submitMilestoneSetsReps(\''+id+'\')" style="width:100%;padding:9px;background:rgba(240,192,64,0.15);border:1px solid var(--gold);color:var(--gold);font-size:11px;letter-spacing:2px;text-transform:uppercase;border-radius:4px;cursor:pointer">✓ Log Completion</button>';
       }
-      if(!ms.firstBonusGiven){html+='<div style="font-size:10px;color:var(--gold);text-align:center;margin-top:5px">🌟 First completion: +'+def.firstBonus+' bonus XP!</div>';}
+      if(!ms.firstBonusGiven){html+='<div style="font-size:10px;color:var(--gold);text-align:center;margin-top:6px">🌟 First completion includes +'+def.firstBonus+' bonus XP</div>';}
     } else {
-      html+='<div style="font-size:12px;color:var(--green);text-align:center;padding:8px">✓ Max completions reached · Resets in '+daysLeft+'d</div>';
+      html+='<div style="font-size:12px;color:var(--green);text-align:center;padding:8px">✓ Max completions this week · Resets in '+daysLeft+'d</div>';
     }
     html+='</div>';
   });
   document.getElementById('milestoneQuestContainer').innerHTML=html;
-  renderMilestoneNotifications();
 }
 
 function submitMilestoneSetsReps(id){
@@ -642,24 +734,37 @@ function submitMilestoneSetsReps(id){
   completeMilestoneQuest(id,sets*reps);
 }
 
+// Render post-submission Status tab notifications
 function renderMilestoneNotifications(){
-  var notifs=S.milestoneNotifications||[];
+  var notifs=(S.milestoneNotifications||[]).filter(function(n){return !n.dismissed;});
   var wrap=document.getElementById('milestoneNotifWrap');
   var cont=document.getElementById('milestoneNotifContent');
-  if(!wrap||!cont)return;
-  // Filter out unlock notifs for already-rendered quests (show only progress ones)
-  var show=notifs.filter(function(n){return n.type==='75'||n.type==='90';});
-  // Also show new unlock notifications
+  if(!wrap||!cont){return;}
   var unlocks=notifs.filter(function(n){return n.type==='unlock';});
-  if(!show.length&&!unlocks.length){wrap.style.display='none';return;}
+  var progress=notifs.filter(function(n){return n.type==='75'||n.type==='90';});
+  if(!unlocks.length&&!progress.length){wrap.style.display='none';return;}
   wrap.style.display='block';
   var html='';
+  // Unlock banners (gold, dismissable)
   unlocks.forEach(function(n){
-    html+='<div style="font-size:12px;color:var(--gold);margin-bottom:6px">🏆 <strong>'+MILESTONE_DEFS[n.id].name+'</strong> unlocked! Check the Quests tab.</div>';
+    html+='<div class="ms-notif-banner" style="border-color:rgba(240,192,64,0.5)">';
+    html+='<button class="ms-notif-dismiss" onclick="dismissMSNotif(\''+n.id+'\',\'unlock\')">✕</button>';
+    html+='<div style="font-size:12px;color:var(--gold);font-weight:600;padding-right:20px">🏆 '+MILESTONE_DEFS[n.id].name+' Unlocked!</div>';
+    html+='<div style="font-size:11px;color:var(--text2);margin-top:3px">Available in the Quests tab → Reward Quests · First completion: +'+MILESTONE_DEFS[n.id].firstBonus+' bonus XP</div>';
+    html+='</div>';
   });
-  show.forEach(function(n){
-    var pct=n.type==='90'?90:75;
-    html+='<div style="font-size:12px;color:var(--text2);margin-bottom:5px">'+(pct===90?'⚡':'💡')+' '+n.msg+'</div>';
+  // Progress banners (90% = urgent orange, 75% = info blue)
+  progress.forEach(function(n){
+    var is90=n.type==='90';
+    html+='<div class="ms-notif-banner'+(is90?' ms-notif-banner-urgent':'')+'">';
+    html+='<button class="ms-notif-dismiss" onclick="dismissMSNotif(\''+n.id+'\',\''+n.type+'\')">✕</button>';
+    html+='<div style="font-size:12px;color:'+(is90?'#ff9944':'var(--cyan)')+';padding-right:20px">'+(is90?'⚡':'💡')+' '+n.msg+'</div>';
+    if(n.best&&n.amt){
+      var bar=Math.min(100,Math.round(n.best/n.amt*100));
+      html+='<div style="background:rgba(255,255,255,0.05);border-radius:2px;height:3px;margin-top:6px;overflow:hidden"><div style="width:'+bar+'%;height:100%;background:'+(is90?'#ff9944':'var(--cyan)')+';border-radius:2px"></div></div>';
+      html+='<div style="font-size:10px;color:var(--text2);margin-top:3px">'+n.best+' / '+n.amt+' reps best session ('+bar+'%)</div>';
+    }
+    html+='</div>';
   });
   cont.innerHTML=html;
 }
@@ -949,6 +1054,7 @@ function updateUI(){
   var wk=getWeekKey();
   if(S.quest&&S.quest.week!==wk){S.questRerolled=false;S.quest=null;generateQuest();}
   else generateQuest();
+  renderMilestoneNotifications();
 }
 
 function updateProteinStatus(){
@@ -1118,6 +1224,8 @@ function submitWorkout(){
   document.getElementById('xpGainNum').textContent='+'+e.xpGain+' XP';
   var box=document.getElementById('xpGainBox');box.classList.add('show');setTimeout(function(){box.classList.remove('show');},4000);
   updateUI();clearForm();showTab('status');
+  // Fire unlock overlay(s) after a short delay so Status tab is visible
+  setTimeout(processMSUnlockQueue,600);
   if(newRank!==oldRank){var r=getRank(newLevel);document.getElementById('rankUpLabel').style.color=r.color;document.getElementById('rankUpLetter').textContent=r.rank;document.getElementById('rankUpLetter').style.color=r.color;document.getElementById('rankUpLetter').style.textShadow='0 0 40px '+r.glow;document.getElementById('rankUpName').textContent=r.rank+' RANK ACHIEVED';document.getElementById('rankUpName').style.color=r.color;document.getElementById('rankUpOverlay').classList.add('show');}
   else if(newLevel>oldLevel){document.getElementById('levelUpNum').textContent=newLevel;document.getElementById('levelUpTitle').textContent=getTitle(newLevel);document.getElementById('levelUpOverlay').classList.add('show');}
   pendingEntry=null;
@@ -1151,6 +1259,8 @@ function showTab(name){
   var idx={status:0,log:1,quests:2,stats:3,tips:4,settings:5}[name];
   document.querySelectorAll('.nav button')[idx].classList.add('active');
   if(name==='stats')setTimeout(function(){showChart('combined',document.querySelector('.chart-tab.active'));},50);
+  if(name==='quests'){renderMilestoneQuests();renderQuestLog();}
+  if(name==='status')renderMilestoneNotifications();
 }
 
 S=loadLocalState();
