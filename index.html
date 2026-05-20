@@ -99,16 +99,18 @@ select{background:var(--panel2);border:1px solid var(--border);color:#fff;paddin
 .edit-entry-item{background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:10px;margin-bottom:8px}
 .recap-nav-dot{flex:1;height:3px;border-radius:2px;background:var(--border);transition:background .2s}
 .data-note{font-size:10px;color:var(--text2);font-style:italic;margin-bottom:8px}
-.ms-unlock-overlay{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:200;display:none;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:24px}
+
+.ms-unlock-overlay{position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:200;display:none;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:24px}
 .ms-unlock-overlay.show{display:flex}
 .ms-unlock-box{background:var(--panel);border:2px solid var(--gold);border-radius:8px;padding:28px 22px;width:100%;max-width:340px;position:relative;overflow:hidden}
-.ms-unlock-box::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(240,192,64,0.12),transparent 70%);pointer-events:none}
-.ms-unlock-shine{position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(240,192,64,0.08),transparent);animation:msShine 1.8s ease-in-out 0.3s forwards}
+.ms-unlock-box::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(240,192,64,0.13),transparent 70%);pointer-events:none}
+.ms-unlock-shine{position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(240,192,64,0.09),transparent);animation:msShine 1.8s ease-in-out 0.3s forwards}
 @keyframes msShine{0%{left:-100%}100%{left:150%}}
-.ms-notif-banner{background:rgba(240,192,64,0.08);border:1px solid rgba(240,192,64,0.4);border-radius:4px;padding:10px 12px;margin-bottom:8px;position:relative;overflow:hidden}
-.ms-notif-banner-urgent{background:rgba(255,100,0,0.08);border:1px solid rgba(255,150,0,0.45)}
+.ms-notif-banner{background:rgba(240,192,64,0.07);border:1px solid rgba(240,192,64,0.4);border-radius:4px;padding:10px 12px;margin-bottom:7px;position:relative;overflow:hidden}
+.ms-notif-banner-urgent{background:rgba(255,100,0,0.07);border-color:rgba(255,150,0,0.45)}
 .ms-notif-dismiss{position:absolute;top:6px;right:8px;background:none;border:none;color:var(--text2);font-size:12px;cursor:pointer;padding:2px 6px;line-height:1}
 .ms-notif-dismiss:hover{color:#fff}
+.sauna-panel-border{border-color:rgba(255,140,60,0.35)!important;background:rgba(255,100,20,0.04)!important}
 </style>
 </head>
 <body>
@@ -147,8 +149,12 @@ select{background:var(--panel2);border:1px solid var(--border);color:#fff;paddin
       <div class="rank-bar-bg"><div class="rank-bar-fill" id="rankBar" style="width:0%"></div></div>
     </div>
   </div>
+    <div id="milestoneNotifWrap" style="display:none;border-color:rgba(240,192,64,0.4);background:rgba(240,192,64,0.05)" class="panel">
+    <div class="panel-title" style="color:var(--gold)">🏆 Reward Quest Progress</div>
+    <div id="milestoneNotifContent"></div>
+  </div>
   <div id="recapBtnWrap" style="display:none"><button class="btn-gold" onclick="showRecap()">⚡ RECAP REPORT</button></div>
-  <div id="milestoneNotifWrap" style="display:none;border-color:rgba(240,192,64,0.4);background:rgba(240,192,64,0.06)" class="panel">
+  <div id="milestoneNotifWrap" style="display:none" class="panel" style="border-color:rgba(240,192,64,0.4);background:rgba(240,192,64,0.06)">
     <div class="panel-title" style="color:var(--gold)">🏆 Reward Quest Progress</div>
     <div id="milestoneNotifContent"></div>
   </div>
@@ -178,6 +184,16 @@ select{background:var(--panel2);border:1px solid var(--border);color:#fff;paddin
       <div style="text-align:right"><div style="font-size:11px;color:var(--text2)">7-Day</div><div style="display:flex;gap:3px;margin-top:4px;justify-content:flex-end" id="streakDots"></div><div style="font-size:10px;color:var(--text2);margin-top:3px" id="activitySync">—</div></div>
     </div>
     <div style="display:flex;gap:3px;margin-top:5px" id="sleepBlocks"></div>
+  </div>
+  <div class="panel sauna-panel-border">
+    <div class="panel-title" style="color:#ff8c3c">🔥 Sauna Recovery</div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div><div style="font-size:11px;color:var(--text2)">Last Session</div><div style="font-size:17px;font-weight:700;color:#fff" id="saunaLastDisplay">—</div><div style="font-size:10px;color:var(--text2)" id="saunaLastLabel"></div></div>
+      <div style="text-align:center"><div style="font-size:11px;color:var(--text2)">This Week</div><div style="font-size:17px;font-weight:700;color:#fff" id="saunaWeekCount">0</div><div style="font-size:10px;color:var(--text2)">sessions</div></div>
+      <div style="text-align:right"><div style="font-size:11px;color:var(--text2)">Weekly Score</div><div style="font-size:17px;font-weight:700;color:var(--text2)" id="saunaScoreDisplay">—</div><div style="font-size:10px;color:var(--text2)" id="saunaScoreLabel"></div></div>
+    </div>
+    <div style="background:rgba(255,140,60,0.1);border:1px solid rgba(255,140,60,0.2);border-radius:2px;height:6px;overflow:hidden;margin-top:8px"><div id="saunaWeekBar" style="height:100%;background:linear-gradient(90deg,#c84000,#ff8c3c);border-radius:2px;transition:width .5s;width:0%"></div></div>
+    <div style="font-size:10px;color:var(--text2);margin-top:4px" id="saunaWeekAdvice"></div>
   </div>
 </div>
 
@@ -230,6 +246,36 @@ select{background:var(--panel2);border:1px solid var(--border);color:#fff;paddin
     <div class="panel-title">Recovery</div>
     <div class="form-group"><div class="form-label">Sleep Last Night (hours)</div><input type="number" id="sleepHours" placeholder="Blank to skip" min="0" max="24" step="0.5"></div>
   </div>
+  <div class="panel sauna-panel-border">
+    <div class="panel-title" style="color:#ff8c3c">🔥 Sauna Session</div>
+    <div class="form-group">
+      <div class="form-label">Duration (mins) <span id="saunaDurationHint" style="font-size:10px;color:var(--text2)"></span></div>
+      <input type="number" id="saunaDuration" placeholder="Blank to skip" min="1" max="90" oninput="updateSaunaPreview()">
+    </div>
+    <div class="form-group">
+      <div class="form-label">Type</div>
+      <select id="saunaType" onchange="updateSaunaPreview()">
+        <option value="traditional">Traditional Finnish (80–100°C)</option>
+        <option value="infrared">Infrared (50–65°C)</option>
+        <option value="steam">Steam Room</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <div class="form-label">Timing</div>
+      <div style="display:flex;gap:5px">
+        <div class="feel-btn" data-sval="post" onclick="setSaunaTiming(this)">Post-Workout</div>
+        <div class="feel-btn active" data-sval="standalone" onclick="setSaunaTiming(this)">Standalone</div>
+        <div class="feel-btn" data-sval="pre" onclick="setSaunaTiming(this)">Pre-Workout</div>
+      </div>
+    </div>
+    <div id="saunaXPPreview" style="display:none;margin-top:6px;background:rgba(255,140,60,0.08);border:1px solid rgba(255,140,60,0.3);border-radius:4px;padding:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:12px;color:#ff8c3c;font-weight:600" id="saunaXPLabel">+0 VIT XP</div>
+        <div style="font-size:10px;color:var(--text2)" id="saunaXPNote"></div>
+      </div>
+      <div id="saunaWarning" style="font-size:11px;color:#ff9944;margin-top:5px;display:none"></div>
+    </div>
+  </div>
   <div class="panel">
     <div class="panel-title">Body Check-in</div>
     <div class="form-group">
@@ -255,6 +301,10 @@ select{background:var(--panel2);border:1px solid var(--border);color:#fff;paddin
     <div style="font-size:9px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:8px">🏆 Reward Quests</div>
     <div id="milestoneQuestContainer"></div>
   </div>
+  <div id="milestoneQuestSection" style="display:none">
+    <div style="font-size:9px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin:4px 0 8px">🏆 Reward Quests</div>
+    <div id="milestoneQuestContainer"></div>
+  </div>
   <div class="panel"><div class="panel-title">Quest Log</div><div id="questLog" style="font-size:12px;color:var(--text2)">No completed quests yet.</div></div>
 </div>
 
@@ -269,6 +319,7 @@ select{background:var(--panel2);border:1px solid var(--border);color:#fff;paddin
     <div class="chart-tab" onclick="showChart('sleep',this)">Sleep</div>
     <div class="chart-tab" onclick="showChart('weight',this)">Weight</div>
     <div class="chart-tab" onclick="showChart('protein',this)">Protein</div>
+    <div class="chart-tab" onclick="showChart('sauna',this)">Sauna</div>
   </div>
   <div class="panel"><div class="panel-title" id="chartTitle">XP Per Session</div><div class="chart-wrap"><canvas id="mainChart"></canvas></div></div>
   <div class="panel"><div class="panel-title">Records & History</div><div id="recordsDisplay" style="font-size:12px;line-height:2;color:var(--text2)">No workouts yet.</div></div>
@@ -286,6 +337,20 @@ select{background:var(--panel2);border:1px solid var(--border);color:#fff;paddin
       <div>👴 Over 40: <span style="color:#fff">+0.2g/kg (anabolic resistance)</span></div>
       <div>💪 Post-workout bonus: <span style="color:#fff">+25g</span></div>
       <div>✅ Hit goal = <span style="color:#fff">+30 XP · 110%+ = +40 XP</span></div>
+    </div>
+  </div>
+  <div class="panel sauna-panel-border">
+    <div class="panel-title" style="color:#ff8c3c">🔥 Sauna Science</div>
+    <div style="font-size:11px;color:var(--text2);line-height:2.1">
+      <div>⏱ Optimal duration: <span style="color:#fff">15–30 mins</span></div>
+      <div>🌡 Finnish: <span style="color:#fff">80–100°C</span> · Infrared: <span style="color:#fff">50–65°C</span></div>
+      <div>📅 Frequency: <span style="color:#fff">3–4×/week</span> for recovery · <span style="color:#fff">4–7×</span> for longevity</div>
+      <div>💪 Post-workout only: <span style="color:#fff">all validated recovery benefits</span></div>
+      <div>🧬 HSP70/90: <span style="color:#fff">activated ~30 min at 80°C+</span></div>
+      <div>📈 GH spike: <span style="color:#fff">up to 16× baseline</span> (high-heat, traditional)</div>
+      <div>💧 Risk: <span style="color:#fff">dehydration</span> — drink 500ml+ post-session</div>
+      <div>⚠️ Avoid pre-workout: <span style="color:#fff">impairs strength & power output</span></div>
+      <div>✅ Post-workout sauna: <span style="color:#fff">+VIT XP · HSP activation · GH boost</span></div>
     </div>
   </div>
 </div>
@@ -347,13 +412,13 @@ select{background:var(--panel2);border:1px solid var(--border);color:#fff;paddin
   <div class="ms-unlock-box">
     <div class="ms-unlock-shine"></div>
     <div style="font-size:10px;letter-spacing:4px;color:var(--gold);text-transform:uppercase;margin-bottom:10px">🏆 Reward Quest Unlocked</div>
-    <div style="font-size:28px;font-weight:900;color:#fff;margin-bottom:8px;line-height:1.2" id="msUnlockName">Plank Challenge</div>
+    <div style="font-size:26px;font-weight:900;color:#fff;margin-bottom:8px;line-height:1.2" id="msUnlockName">Plank Challenge</div>
     <div style="font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:14px" id="msUnlockWhy"></div>
-    <div style="background:rgba(240,192,64,0.1);border:1px solid rgba(240,192,64,0.3);border-radius:4px;padding:10px;margin-bottom:16px">
-      <div style="font-size:10px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;margin-bottom:5px">First Completion Bonus</div>
+    <div style="background:rgba(240,192,64,0.1);border:1px solid rgba(240,192,64,0.3);border-radius:4px;padding:10px;margin-bottom:14px">
+      <div style="font-size:10px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">First Completion Bonus</div>
       <div style="font-size:22px;font-weight:900;color:var(--gold)" id="msUnlockBonus">+100 XP</div>
     </div>
-    <div style="font-size:11px;color:var(--text2);margin-bottom:16px">Find it in the <strong style="color:#fff">Quests tab</strong> → Reward Quests</div>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:14px">Find it in the <strong style="color:#fff">Quests tab</strong> → Reward Quests</div>
     <button onclick="closeMsUnlock()" style="width:100%;padding:11px;background:rgba(240,192,64,0.15);border:1px solid var(--gold);color:var(--gold);font-size:11px;letter-spacing:3px;text-transform:uppercase;border-radius:4px;cursor:pointer;font-weight:600">VIEW QUEST ▶</button>
   </div>
 </div>
@@ -421,7 +486,7 @@ async function saveToDrive(){if(!accessToken||!driveFileId)return;await fetch('h
 async function saveState(){try{localStorage.setItem('slw_v4',JSON.stringify(S));}catch(e){}if(!accessToken){showDriveStatus('Saved locally','var(--text2)');return;}if(savePending)return;savePending=true;showDriveStatus('⟳ Saving...');try{await saveToDrive();showDriveStatus('✓ Saved');}catch(e){showDriveStatus('Save failed','var(--red)');}savePending=false;}
 
 // ── State ──
-var DEFAULT_STATE={xp:0,level:1,strXP:0,agiXP:0,endXP:0,vitXP:0,history:[],weights:[],lastSleep:null,profile:{heightCm:0,activityLevel:'active',age:0,gender:''},quest:null,questLog:[],questRerolled:false,milestones:{plank:{unlocked:false,firstBonusGiven:false,weekStart:null,completions:0},diamond:{unlocked:false,firstBonusGiven:false,weekStart:null,completions:0},pauseSqt:{unlocked:false,firstBonusGiven:false,weekStart:null,completions:0}},milestoneNotifications:[],msUnlockQueue:[]};
+var DEFAULT_STATE={xp:0,level:1,strXP:0,agiXP:0,endXP:0,vitXP:0,history:[],weights:[],lastSleep:null,saunaSessions:[],profile:{heightCm:0,activityLevel:'active',age:0,gender:''},quest:null,questLog:[],questRerolled:false,milestones:{plank:{unlocked:false,firstBonusGiven:false,weekStart:null,completions:0},diamond:{unlocked:false,firstBonusGiven:false,weekStart:null,completions:0},pauseSqt:{unlocked:false,firstBonusGiven:false,weekStart:null,completions:0}},milestoneNotifications:[],msUnlockQueue:[]};
 var S=Object.assign({},DEFAULT_STATE);
 function loadLocalState(){try{var r=localStorage.getItem('slw_v4');if(r)return Object.assign({},DEFAULT_STATE,JSON.parse(r));}catch(e){}return Object.assign({},DEFAULT_STATE);}
 
@@ -482,292 +547,214 @@ function updateProteinAdvice(){
   document.getElementById('proteinAdviceBox').classList.add('show');
 }
 
+// ── Sauna System ──
+var saunaTimingVal='standalone';
+function setSaunaTiming(el){document.querySelectorAll('[data-sval]').forEach(function(b){b.classList.remove('active');});el.classList.add('active');saunaTimingVal=el.dataset.sval;updateSaunaPreview();}
+function calcSaunaXP(mins,type,timing){
+  if(!mins||mins<5)return{xp:0,vitXP:0,note:'Too short for benefit',warn:''};
+  var base=0;
+  if(mins<10)base=10;else if(mins<15)base=20;else if(mins<20)base=35;else if(mins<25)base=50;else if(mins<=30)base=60;else if(mins<=45)base=45;else base=25;
+  var typeMult=type==='traditional'?1.0:type==='infrared'?0.85:0.7;
+  var timingMult=timing==='post'?1.4:timing==='standalone'?1.0:0.6;
+  var xp=Math.round(base*typeMult*timingMult);
+  var warn='';
+  if(mins>30&&timing!=='pre')warn='Over 30 min: diminishing returns. Drink 500ml+ water.';
+  if(timing==='pre')warn='Pre-workout sauna impairs strength & power. Consider post-workout instead.';
+  if(mins>45)warn='Over 45 min risks heat exhaustion. Keep sessions under 30 min for best results.';
+  var note=timing==='post'?'+40% post-workout bonus':timing==='pre'?'Pre-workout — reduced XP':'Standalone session';
+  return{xp:xp,vitXP:xp,note:note,warn:warn};
+}
+function updateSaunaPreview(){
+  var mins=parseInt(document.getElementById('saunaDuration').value)||0;
+  var type=document.getElementById('saunaType').value;
+  var prev=document.getElementById('saunaXPPreview');
+  if(!mins){prev.style.display='none';document.getElementById('saunaDurationHint').textContent='';return;}
+  prev.style.display='block';
+  var result=calcSaunaXP(mins,type,saunaTimingVal);
+  document.getElementById('saunaXPLabel').textContent='+'+result.xp+' VIT XP';
+  document.getElementById('saunaXPNote').textContent=result.note;
+  var warnEl=document.getElementById('saunaWarning');
+  warnEl.style.display=result.warn?'block':'none';warnEl.textContent=result.warn;
+  var hint='';
+  if(mins<10)hint='Minimal benefit';else if(mins<15)hint='Warm-up range';else if(mins<=20)hint='Good';else if(mins<=30)hint='Optimal — HSP & GH zone';else if(mins<=45)hint='Diminishing returns';else hint='Overuse risk';
+  document.getElementById('saunaDurationHint').textContent=hint;
+}
+function getSaunaWeekSessions(){
+  if(!S.saunaSessions||!S.saunaSessions.length)return[];
+  return S.saunaSessions.filter(function(s){return(Date.now()-new Date(s.date).getTime())<604800000;});
+}
+function updateSaunaStatus(){
+  if(!S.saunaSessions)S.saunaSessions=[];
+  var el=document.getElementById('saunaLastDisplay');if(!el)return;
+  if(!S.saunaSessions.length){el.textContent='—';document.getElementById('saunaLastLabel').textContent='No sessions yet';}
+  else{var last=S.saunaSessions[S.saunaSessions.length-1];var tl=last.type==='traditional'?'Finnish':last.type==='infrared'?'Infrared':'Steam';el.textContent=last.mins+'min';document.getElementById('saunaLastLabel').textContent=tl+' · '+last.timing+' · '+new Date(last.date).toLocaleDateString([],{month:'short',day:'numeric'});}
+  var wk=getSaunaWeekSessions(),wc=wk.length,wm=wk.reduce(function(a,s){return a+s.mins;},0);
+  document.getElementById('saunaWeekCount').textContent=wc;
+  var score,scoreColor,scoreTxt,barPct,adviceTxt;
+  if(wc===0){score='—';scoreColor='var(--text2)';scoreTxt='No sessions';barPct=0;adviceTxt='Aim for 2–3 sessions this week for recovery benefits';}
+  else if(wc===1){score='Fair';scoreColor='#5a8fa8';scoreTxt='Build habit';barPct=20;adviceTxt='Research: 3–4/week for measurable recovery';}
+  else if(wc===2){score='Good';scoreColor='var(--cyan)';scoreTxt='Progressing';barPct=50;adviceTxt='2 sessions · Add 1 more post-workout this week';}
+  else if(wc<=4){score='Optimal';scoreColor='var(--green)';scoreTxt='Recovery zone';barPct=85;adviceTxt='3–4 sessions · Prime range for HSP & muscle recovery';}
+  else if(wc<=7){score='Elite';scoreColor='var(--gold)';scoreTxt='Max longevity';barPct=100;adviceTxt='Finnish data: 40% lower cardiovascular mortality at 4–7x/week';}
+  else{score='Overuse';scoreColor='var(--red)';scoreTxt='Rest needed';barPct=100;adviceTxt='Too frequent — rest 1–2 days to avoid adrenal fatigue.';}
+  document.getElementById('saunaScoreDisplay').textContent=score;document.getElementById('saunaScoreDisplay').style.color=scoreColor;
+  document.getElementById('saunaScoreLabel').textContent=scoreTxt;
+  document.getElementById('saunaWeekBar').style.width=barPct+'%';
+  document.getElementById('saunaWeekAdvice').textContent=(wm>0?wm+'min total · ':'')+adviceTxt;
+}
+
 // ── Milestone Quest System ──
 var MILESTONE_DEFS={
-  plank:{
-    id:'plank',name:'Plank Challenge',trigger:'situps',triggerAmt:80,
-    desc:'Hold a plank — unlock by logging 80 sit-ups in one session',
+  plank:{id:'plank',name:'Plank Challenge',trigger:'situps',triggerAmt:80,
     why:'Planks activate deep stabilisers (transverse abdominis, obliques) that sit-ups miss — the perfect complement.',
-    inputType:'duration',
-    options:[
-      {label:'30 seconds',value:30,baseXP:30},
-      {label:'60 seconds',value:60,baseXP:75},
-      {label:'90 seconds',value:90,baseXP:135},
-      {label:'120 seconds',value:120,baseXP:210}
-    ],
-    firstBonus:100,maxCompletions:4,windowDays:7,
-    notif75:'Log 80 sit-ups in a session to unlock the Plank Reward Quest',
-    notif90:'Almost there — just a few more sit-ups to unlock the Plank Reward Quest'
-  },
-  diamond:{
-    id:'diamond',name:'Diamond Push-up Challenge',trigger:'pushups',triggerAmt:60,
-    desc:'Unlock by logging 60 push-ups in one session',
+    inputType:'duration',firstBonus:100,maxCompletions:4,
+    options:[{label:'30s',value:30,baseXP:30},{label:'60s',value:60,baseXP:75},{label:'90s',value:90,baseXP:135},{label:'120s',value:120,baseXP:210}]},
+  diamond:{id:'diamond',name:'Diamond Push-up Challenge',trigger:'pushups',triggerAmt:60,
     why:'Diamond push-ups shift load to triceps and inner chest, activating muscles standard push-ups underwork — a direct strength enhancer.',
-    inputType:'setsreps',baseXPPerRep:2,
-    firstBonus:100,maxCompletions:4,windowDays:7,
-    notif75:'Log 60 push-ups in a session to unlock the Diamond Push-up Reward Quest',
-    notif90:'Almost there — just a few more push-ups to unlock the Diamond Push-up Reward Quest'
-  },
-  pauseSqt:{
-    id:'pauseSqt',name:'Pause Squat Challenge',trigger:'squats',triggerAmt:60,
-    desc:'Unlock by logging 60 squats in one session',
+    inputType:'setsreps',baseXPPerRep:2,firstBonus:100,maxCompletions:4},
+  pauseSqt:{id:'pauseSqt',name:'Pause Squat Challenge',trigger:'squats',triggerAmt:60,
     why:'Pause squats eliminate the stretch reflex and increase quad activation by 20–25% — building genuine strength vs momentum-assisted reps.',
-    inputType:'setsreps',baseXPPerRep:2.5,
-    firstBonus:100,maxCompletions:4,windowDays:7,
-    notif75:'Log 60 squats in a session to unlock the Pause Squat Reward Quest',
-    notif90:'Almost there — just a few more squats to unlock the Pause Squat Reward Quest'
-  }
+    inputType:'setsreps',baseXPPerRep:2.5,firstBonus:100,maxCompletions:4}
 };
-
 var MULTIPLIERS=[1,1.5,2.25,3.375];
 
-function getMilestone(id){
-  if(!S.milestones)S.milestones={};
-  if(!S.milestones[id])S.milestones[id]={unlocked:false,firstBonusGiven:false,weekStart:null,completions:0};
-  return S.milestones[id];
-}
+function getMilestone(id){if(!S.milestones)S.milestones={};if(!S.milestones[id])S.milestones[id]={unlocked:false,firstBonusGiven:false,weekStart:null,completions:0};return S.milestones[id];}
 function saveMilestone(id,data){if(!S.milestones)S.milestones={};S.milestones[id]=data;}
-
-function getBestSingleSession(key){
-  if(!S.history||!S.history.length)return 0;
-  return Math.max.apply(null,[0].concat(S.history.map(function(h){return h[key]!=null?h[key]:0;})));
-}
-
-// Build a dynamic, context-aware notification message
+function getBestSingleSession(key){if(!S.history||!S.history.length)return 0;return Math.max.apply(null,[0].concat(S.history.map(function(h){return h[key]!=null?h[key]:0;})));}
 function buildMSNotifMsg(def,best,type){
   var remaining=def.triggerAmt-best;
-  var exerciseName=def.trigger==='situps'?'sit-ups':def.trigger==='pushups'?'push-ups':'squats';
-  var questName=def.name;
-  if(type==='75'){
-    return 'Reward Quest Nearly Unlocked — log '+remaining+' more '+exerciseName+' in a single session to unlock the '+questName;
-  } else {
-    return 'Almost there — '+remaining+' more '+exerciseName+' to unlock your '+questName;
-  }
+  var exName=def.trigger==='situps'?'sit-ups':def.trigger==='pushups'?'push-ups':'squats';
+  return type==='75'?'Reward Quest Nearly Unlocked — log '+remaining+' more '+exName+' in a single session to unlock the '+def.name:'Almost there — '+remaining+' more '+exName+' to unlock your '+def.name;
 }
-
 function checkMilestoneUnlocks(entry){
   if(!S.milestoneNotifications)S.milestoneNotifications=[];
   if(!S.msUnlockQueue)S.msUnlockQueue=[];
   Object.keys(MILESTONE_DEFS).forEach(function(id){
-    var def=MILESTONE_DEFS[id];
-    var ms=getMilestone(id);
-    if(ms.unlocked)return;
-    // Use only the current session's reps as the trigger (single-session requirement)
-    var sessionReps=entry[def.trigger]||0;
-    var allTimeBest=Math.max(getBestSingleSession(def.trigger),sessionReps);
-    var pct=allTimeBest/def.triggerAmt;
+    var def=MILESTONE_DEFS[id],ms=getMilestone(id);if(ms.unlocked)return;
+    var best=Math.max(getBestSingleSession(def.trigger),entry[def.trigger]||0);
+    var pct=best/def.triggerAmt;
     if(pct>=1){
       ms.unlocked=true;saveMilestone(id,ms);
-      // Queue the full-screen unlock overlay
-      var alreadyQueued=S.msUnlockQueue.some(function(q){return q.id===id;});
-      if(!alreadyQueued)S.msUnlockQueue.push({id:id,name:def.name,why:def.why,firstBonus:def.firstBonus});
-      // Remove old 75/90 notifs for this quest now it's unlocked
-      S.milestoneNotifications=S.milestoneNotifications.filter(function(n){return !(n.id===id&&(n.type==='75'||n.type==='90'));});
-      // Add unlock banner notif (dismissable, shows on status tab)
-      var alreadyUnlock=S.milestoneNotifications.some(function(n){return n.id===id&&n.type==='unlock';});
-      if(!alreadyUnlock)S.milestoneNotifications.push({id:id,type:'unlock',name:def.name,dismissed:false});
+      if(!S.msUnlockQueue.some(function(q){return q.id===id;}))S.msUnlockQueue.push({id:id,name:def.name,why:def.why,firstBonus:def.firstBonus});
+      S.milestoneNotifications=S.milestoneNotifications.filter(function(n){return!(n.id===id&&(n.type==='75'||n.type==='90'));});
+      if(!S.milestoneNotifications.some(function(n){return n.id===id&&n.type==='unlock';}))S.milestoneNotifications.push({id:id,type:'unlock',dismissed:false});
     } else if(pct>=0.9){
-      // Upgrade 75 → 90 if exists, else add 90
-      S.milestoneNotifications=S.milestoneNotifications.filter(function(n){return !(n.id===id&&n.type==='75');});
-      var exists90=S.milestoneNotifications.some(function(n){return n.id===id&&n.type==='90';});
-      if(!exists90){
-        var msg=buildMSNotifMsg(def,allTimeBest,'90');
-        S.milestoneNotifications.push({id:id,type:'90',msg:msg,best:allTimeBest,amt:def.triggerAmt,dismissed:false});
-      } else {
-        // Update the remaining count
-        S.milestoneNotifications.forEach(function(n){if(n.id===id&&n.type==='90'){n.msg=buildMSNotifMsg(def,allTimeBest,'90');n.best=allTimeBest;}});
-      }
+      S.milestoneNotifications=S.milestoneNotifications.filter(function(n){return!(n.id===id&&n.type==='75');});
+      if(!S.milestoneNotifications.some(function(n){return n.id===id&&n.type==='90';}))S.milestoneNotifications.push({id:id,type:'90',msg:buildMSNotifMsg(def,best,'90'),best:best,amt:def.triggerAmt,dismissed:false});
+      else S.milestoneNotifications.forEach(function(n){if(n.id===id&&n.type==='90'){n.msg=buildMSNotifMsg(def,best,'90');n.best=best;}});
     } else if(pct>=0.75){
-      var exists75=S.milestoneNotifications.some(function(n){return n.id===id&&n.type==='75';});
-      if(!exists75){
-        var msg=buildMSNotifMsg(def,allTimeBest,'75');
-        S.milestoneNotifications.push({id:id,type:'75',msg:msg,best:allTimeBest,amt:def.triggerAmt,dismissed:false});
-      } else {
-        S.milestoneNotifications.forEach(function(n){if(n.id===id&&n.type==='75'){n.msg=buildMSNotifMsg(def,allTimeBest,'75');n.best=allTimeBest;}});
-      }
+      if(!S.milestoneNotifications.some(function(n){return n.id===id&&n.type==='75';}))S.milestoneNotifications.push({id:id,type:'75',msg:buildMSNotifMsg(def,best,'75'),best:best,amt:def.triggerAmt,dismissed:false});
+      else S.milestoneNotifications.forEach(function(n){if(n.id===id&&n.type==='75'){n.msg=buildMSNotifMsg(def,best,'75');n.best=best;}});
     }
   });
 }
-
-// ── Milestone Unlock Overlay ──
 var msUnlockQueue_local=[];
-function processMSUnlockQueue(){
-  if(!S.msUnlockQueue||!S.msUnlockQueue.length)return;
-  msUnlockQueue_local=S.msUnlockQueue.slice();
-  S.msUnlockQueue=[];
-  saveState();
-  showNextMsUnlock();
-}
+function processMSUnlockQueue(){if(!S.msUnlockQueue||!S.msUnlockQueue.length)return;msUnlockQueue_local=S.msUnlockQueue.slice();S.msUnlockQueue=[];saveState();showNextMsUnlock();}
 function showNextMsUnlock(){
   if(!msUnlockQueue_local.length){document.getElementById('msUnlockOverlay').classList.remove('show');return;}
   var item=msUnlockQueue_local.shift();
   document.getElementById('msUnlockName').textContent=item.name;
   document.getElementById('msUnlockWhy').textContent=item.why;
   document.getElementById('msUnlockBonus').textContent='+'+item.firstBonus+' XP — First Completion Only';
-  // Re-animate shine
   var shine=document.querySelector('.ms-unlock-shine');
   if(shine){shine.style.animation='none';void shine.offsetWidth;shine.style.animation='msShine 1.8s ease-in-out 0.3s forwards';}
   document.getElementById('msUnlockOverlay').classList.add('show');
 }
-function closeMsUnlock(){
-  document.getElementById('msUnlockOverlay').classList.remove('show');
-  setTimeout(function(){
-    if(msUnlockQueue_local.length){showNextMsUnlock();}
-    else{showTab('quests');}
-  },200);
-}
-
-function dismissMSNotif(id,type){
-  S.milestoneNotifications=S.milestoneNotifications.filter(function(n){return !(n.id===id&&n.type===type);});
-  saveState();renderMilestoneNotifications();
-}
-
+function closeMsUnlock(){document.getElementById('msUnlockOverlay').classList.remove('show');setTimeout(function(){if(msUnlockQueue_local.length)showNextMsUnlock();else showTab('quests');},200);}
+function dismissMSNotif(id,type){S.milestoneNotifications=S.milestoneNotifications.filter(function(n){return!(n.id===id&&n.type===type);});saveState();renderMilestoneNotifications();}
 function getMilestoneRecommendation(id){
-  var def=MILESTONE_DEFS[id];
-  if(def.inputType!=='setsreps')return null;
+  var def=MILESTONE_DEFS[id];if(def.inputType!=='setsreps')return null;
   var arr=S.history.filter(function(h){return h[def.trigger]!=null;});
   var avg=arr.length?Math.round(arr.reduce(function(a,h){return a+h[def.trigger];},0)/arr.length):0;
-  var sets=3,reps=5;
-  if(avg>=60){sets=4;reps=10;}
-  else if(avg>=40){sets=3;reps=8;}
-  else if(avg>=20){sets=3;reps=6;}
-  return{sets:sets,reps:reps};
+  if(avg>=60)return{sets:4,reps:10};if(avg>=40)return{sets:3,reps:8};if(avg>=20)return{sets:3,reps:6};return{sets:3,reps:5};
 }
-
 function getMilestoneXP(id,inputVal,completionNum){
-  var def=MILESTONE_DEFS[id];
-  var mult=MULTIPLIERS[Math.min(completionNum,3)];
-  var baseXP=0;
-  if(def.inputType==='duration'){
-    var opt=def.options.find(function(o){return o.value===inputVal;});
-    baseXP=opt?opt.baseXP:def.options[0].baseXP;
-  } else {
-    baseXP=Math.round(inputVal*def.baseXPPerRep);
-  }
+  var def=MILESTONE_DEFS[id],mult=MULTIPLIERS[Math.min(completionNum,3)],baseXP=0;
+  if(def.inputType==='duration'){var opt=def.options.find(function(o){return o.value===inputVal;});baseXP=opt?opt.baseXP:def.options[0].baseXP;}
+  else baseXP=Math.round(inputVal*def.baseXPPerRep);
   return Math.round(baseXP*mult);
 }
-
-function isInWindow(ms){
-  if(!ms.weekStart)return false;
-  var diff=(Date.now()-new Date(ms.weekStart).getTime())/(1000*60*60*24);
-  return diff<7;
-}
-
+function isInWindow(ms){if(!ms.weekStart)return false;return(Date.now()-new Date(ms.weekStart).getTime())<604800000;}
 function completeMilestoneQuest(id,inputVal){
-  var def=MILESTONE_DEFS[id];
-  var ms=getMilestone(id);
-  if(!ms.unlocked)return;
+  var def=MILESTONE_DEFS[id],ms=getMilestone(id);if(!ms.unlocked)return;
   if(!isInWindow(ms)){ms.weekStart=new Date().toISOString();ms.completions=0;}
-  if(ms.completions>=def.maxCompletions){showDriveStatus('Max completions reached this week','var(--text2)');return;}
-  var xp=getMilestoneXP(id,inputVal,ms.completions);
-  var isFirst=!ms.firstBonusGiven;
+  if(ms.completions>=def.maxCompletions){showDriveStatus('Max completions this week','var(--text2)');return;}
+  var xp=getMilestoneXP(id,inputVal,ms.completions),isFirst=!ms.firstBonusGiven;
   if(isFirst){xp+=def.firstBonus;ms.firstBonusGiven=true;}
-  ms.completions++;
-  S.xp+=xp;
+  ms.completions++;S.xp+=xp;
   if(!S.questLog)S.questLog=[];
   S.questLog.unshift({name:def.name+(isFirst?' 🌟':''),xp:xp,week:getWeekKey()});
-  saveMilestone(id,ms);
-  saveState();updateUI();renderMilestoneQuests();
-  showDriveStatus('+'+xp+' XP'+(isFirst?' (incl. +'+def.firstBonus+' first completion bonus)':''),'var(--gold)');
+  saveMilestone(id,ms);saveState();updateUI();renderMilestoneQuests();
+  showDriveStatus('+'+xp+' XP'+(isFirst?' (incl. +'+def.firstBonus+' first bonus)':''),'var(--gold)');
 }
-
+function submitMilestoneSetsReps(id){
+  var sets=parseInt(document.getElementById('ms_'+id+'_sets').value)||0,reps=parseInt(document.getElementById('ms_'+id+'_reps').value)||0;
+  if(!sets||!reps){showDriveStatus('Enter sets and reps','var(--red)');return;}
+  completeMilestoneQuest(id,sets*reps);
+}
 function renderMilestoneQuests(){
   var anyUnlocked=Object.keys(MILESTONE_DEFS).some(function(id){return getMilestone(id).unlocked;});
-  var sec=document.getElementById('milestoneQuestSection');
-  if(!sec)return;
+  var sec=document.getElementById('milestoneQuestSection');if(!sec)return;
   sec.style.display=anyUnlocked?'block':'none';
   var html='';
   Object.keys(MILESTONE_DEFS).forEach(function(id){
-    var ms=getMilestone(id);
-    if(!ms.unlocked)return;
-    var def=MILESTONE_DEFS[id];
-    var inWindow=isInWindow(ms);
-    var completions=inWindow?ms.completions:0;
-    var remaining=def.maxCompletions-completions;
-    var nextMult=MULTIPLIERS[Math.min(completions,3)];
-    var daysLeft=0;
-    if(inWindow&&ms.weekStart){daysLeft=Math.ceil(7-((Date.now()-new Date(ms.weekStart).getTime())/(1000*60*60*24)));}
+    var ms=getMilestone(id);if(!ms.unlocked)return;
+    var def=MILESTONE_DEFS[id],inWindow=isInWindow(ms);
+    var completions=inWindow?ms.completions:0,remaining=def.maxCompletions-completions;
+    var nextMult=MULTIPLIERS[Math.min(completions,3)],daysLeft=0;
+    if(inWindow&&ms.weekStart)daysLeft=Math.ceil(7-((Date.now()-new Date(ms.weekStart).getTime())/86400000));
     var rec=getMilestoneRecommendation(id);
     html+='<div class="quest-card" style="border-color:rgba(240,192,64,0.45);margin-bottom:10px">';
     html+='<div style="font-size:11px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:6px">🏆 '+def.name+'</div>';
-    html+='<div style="font-size:12px;color:var(--text2);margin-bottom:6px;line-height:1.5">💡 '+def.why+'</div>';
-    if(inWindow){
-      html+='<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:6px">';
-      html+='<span>Completions: <strong style="color:#fff">'+completions+'/'+def.maxCompletions+'</strong></span>';
-      html+='<span style="color:var(--gold)">'+daysLeft+'d left · '+Math.round(nextMult*100)+'% XP</span></div>';
-    } else {
-      html+='<div style="font-size:11px;color:var(--text2);margin-bottom:6px">Available now · Complete up to '+def.maxCompletions+'× this week</div>';
-    }
+    html+='<div style="font-size:12px;color:var(--text2);margin-bottom:6px;line-height:1.5">'+def.why+'</div>';
+    if(inWindow){html+='<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:6px"><span>Completions: <strong style="color:#fff">'+completions+'/'+def.maxCompletions+'</strong></span><span style="color:var(--gold)">'+daysLeft+'d left · '+Math.round(nextMult*100)+'% XP</span></div>';}
+    else{html+='<div style="font-size:11px;color:var(--text2);margin-bottom:6px">Available now · Complete up to '+def.maxCompletions+'x this week</div>';}
     if(remaining>0||!inWindow){
       if(def.inputType==='duration'){
         html+='<div style="font-size:10px;color:var(--text2);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px">Select Duration</div>';
         html+='<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">';
-        def.options.forEach(function(opt){
-          var xp=getMilestoneXP(id,opt.value,completions);
-          html+='<button onclick="completeMilestoneQuest(\''+id+'\','+opt.value+')" style="flex:1;min-width:60px;padding:8px 4px;background:rgba(240,192,64,0.1);border:1px solid var(--gold);color:var(--gold);font-size:10px;border-radius:4px;cursor:pointer;text-align:center;line-height:1.5">'+opt.label+'<br><span style="font-size:9px;color:var(--text2)">+'+xp+' XP</span></button>';
-        });
+        def.options.forEach(function(opt){var xp=getMilestoneXP(id,opt.value,completions);html+='<button onclick="completeMilestoneQuest(\''+id+'\','+opt.value+')" style="flex:1;min-width:55px;padding:8px 4px;background:rgba(240,192,64,0.1);border:1px solid var(--gold);color:var(--gold);font-size:10px;border-radius:4px;cursor:pointer;text-align:center;line-height:1.5">'+opt.label+'<br><span style="font-size:9px;color:var(--text2)">+'+xp+' XP</span></button>';});
         html+='</div>';
       } else {
         var xpPer=Math.round(def.baseXPPerRep*nextMult*10)/10;
         html+='<div style="font-size:10px;color:var(--text2);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px">Log Completion</div>';
-        if(rec)html+='<div style="font-size:11px;color:var(--cyan);margin-bottom:6px">Suggested: '+rec.sets+' sets × '+rec.reps+' reps</div>';
-        html+='<div style="display:flex;gap:6px;margin-bottom:8px">';
-        html+='<div style="flex:1"><div style="font-size:9px;color:var(--text2);margin-bottom:3px;text-transform:uppercase">Sets</div><input type="number" id="ms_'+id+'_sets" placeholder="3" min="1" max="20" style="width:100%;font-size:13px;padding:6px 8px;background:var(--panel2);border:1px solid var(--border);color:#fff;border-radius:4px;outline:none"></div>';
-        html+='<div style="flex:1"><div style="font-size:9px;color:var(--text2);margin-bottom:3px;text-transform:uppercase">Reps/set</div><input type="number" id="ms_'+id+'_reps" placeholder="5" min="1" style="width:100%;font-size:13px;padding:6px 8px;background:var(--panel2);border:1px solid var(--border);color:#fff;border-radius:4px;outline:none"></div>';
-        html+='</div>';
+        if(rec)html+='<div style="font-size:11px;color:var(--cyan);margin-bottom:6px">Suggested: '+rec.sets+' sets x '+rec.reps+' reps</div>';
+        html+='<div style="display:flex;gap:6px;margin-bottom:8px"><div style="flex:1"><div style="font-size:9px;color:var(--text2);margin-bottom:3px;text-transform:uppercase">Sets</div><input type="number" id="ms_'+id+'_sets" placeholder="3" min="1" max="20" style="width:100%;font-size:13px;padding:6px 8px;background:var(--panel2);border:1px solid var(--border);color:#fff;border-radius:4px;outline:none"></div><div style="flex:1"><div style="font-size:9px;color:var(--text2);margin-bottom:3px;text-transform:uppercase">Reps/set</div><input type="number" id="ms_'+id+'_reps" placeholder="5" min="1" style="width:100%;font-size:13px;padding:6px 8px;background:var(--panel2);border:1px solid var(--border);color:#fff;border-radius:4px;outline:none"></div></div>';
         html+='<div style="font-size:11px;color:var(--text2);margin-bottom:6px">'+xpPer+' XP per rep · '+Math.round(nextMult*100)+'% multiplier</div>';
-        html+='<button onclick="submitMilestoneSetsReps(\''+id+'\')" style="width:100%;padding:9px;background:rgba(240,192,64,0.15);border:1px solid var(--gold);color:var(--gold);font-size:11px;letter-spacing:2px;text-transform:uppercase;border-radius:4px;cursor:pointer">✓ Log Completion</button>';
+        html+='<button onclick="submitMilestoneSetsReps(\''+id+'\')" style="width:100%;padding:9px;background:rgba(240,192,64,0.15);border:1px solid var(--gold);color:var(--gold);font-size:11px;letter-spacing:2px;text-transform:uppercase;border-radius:4px;cursor:pointer">Log Completion</button>';
       }
-      if(!ms.firstBonusGiven){html+='<div style="font-size:10px;color:var(--gold);text-align:center;margin-top:6px">🌟 First completion includes +'+def.firstBonus+' bonus XP</div>';}
-    } else {
-      html+='<div style="font-size:12px;color:var(--green);text-align:center;padding:8px">✓ Max completions this week · Resets in '+daysLeft+'d</div>';
-    }
+      if(!ms.firstBonusGiven)html+='<div style="font-size:10px;color:var(--gold);text-align:center;margin-top:6px">First completion includes +'+def.firstBonus+' bonus XP</div>';
+    } else {html+='<div style="font-size:12px;color:var(--green);text-align:center;padding:8px">Max completions this week · Resets in '+daysLeft+'d</div>';}
     html+='</div>';
   });
   document.getElementById('milestoneQuestContainer').innerHTML=html;
 }
-
-function submitMilestoneSetsReps(id){
-  var sets=parseInt(document.getElementById('ms_'+id+'_sets').value)||0;
-  var reps=parseInt(document.getElementById('ms_'+id+'_reps').value)||0;
-  if(!sets||!reps){showDriveStatus('Enter sets and reps','var(--red)');return;}
-  completeMilestoneQuest(id,sets*reps);
-}
-
-// Render post-submission Status tab notifications
 function renderMilestoneNotifications(){
-  var notifs=(S.milestoneNotifications||[]).filter(function(n){return !n.dismissed;});
-  var wrap=document.getElementById('milestoneNotifWrap');
-  var cont=document.getElementById('milestoneNotifContent');
-  if(!wrap||!cont){return;}
+  var notifs=(S.milestoneNotifications||[]).filter(function(n){return!n.dismissed;});
+  var wrap=document.getElementById('milestoneNotifWrap'),cont=document.getElementById('milestoneNotifContent');
+  if(!wrap||!cont)return;
   var unlocks=notifs.filter(function(n){return n.type==='unlock';});
   var progress=notifs.filter(function(n){return n.type==='75'||n.type==='90';});
   if(!unlocks.length&&!progress.length){wrap.style.display='none';return;}
   wrap.style.display='block';
   var html='';
-  // Unlock banners (gold, dismissable)
   unlocks.forEach(function(n){
-    html+='<div class="ms-notif-banner" style="border-color:rgba(240,192,64,0.5)">';
-    html+='<button class="ms-notif-dismiss" onclick="dismissMSNotif(\''+n.id+'\',\'unlock\')">✕</button>';
+    html+='<div class="ms-notif-banner"><button class="ms-notif-dismiss" onclick="dismissMSNotif(\''+n.id+'\',\'unlock\')">x</button>';
     html+='<div style="font-size:12px;color:var(--gold);font-weight:600;padding-right:20px">🏆 '+MILESTONE_DEFS[n.id].name+' Unlocked!</div>';
-    html+='<div style="font-size:11px;color:var(--text2);margin-top:3px">Available in the Quests tab → Reward Quests · First completion: +'+MILESTONE_DEFS[n.id].firstBonus+' bonus XP</div>';
-    html+='</div>';
+    html+='<div style="font-size:11px;color:var(--text2);margin-top:3px">Quests tab → Reward Quests · First completion: +'+MILESTONE_DEFS[n.id].firstBonus+' bonus XP</div></div>';
   });
-  // Progress banners (90% = urgent orange, 75% = info blue)
   progress.forEach(function(n){
     var is90=n.type==='90';
     html+='<div class="ms-notif-banner'+(is90?' ms-notif-banner-urgent':'')+'">';
-    html+='<button class="ms-notif-dismiss" onclick="dismissMSNotif(\''+n.id+'\',\''+n.type+'\')">✕</button>';
-    html+='<div style="font-size:12px;color:'+(is90?'#ff9944':'var(--cyan)')+';padding-right:20px">'+(is90?'⚡':'💡')+' '+n.msg+'</div>';
-    if(n.best&&n.amt){
-      var bar=Math.min(100,Math.round(n.best/n.amt*100));
-      html+='<div style="background:rgba(255,255,255,0.05);border-radius:2px;height:3px;margin-top:6px;overflow:hidden"><div style="width:'+bar+'%;height:100%;background:'+(is90?'#ff9944':'var(--cyan)')+';border-radius:2px"></div></div>';
-      html+='<div style="font-size:10px;color:var(--text2);margin-top:3px">'+n.best+' / '+n.amt+' reps best session ('+bar+'%)</div>';
-    }
+    html+='<button class="ms-notif-dismiss" onclick="dismissMSNotif(\''+n.id+'\',\''+n.type+'\')">x</button>';
+    html+='<div style="font-size:12px;color:'+(is90?'#ff9944':'var(--cyan)')+';padding-right:20px">'+(is90?'! ':'')+n.msg+'</div>';
+    if(n.best&&n.amt){var bar=Math.min(100,Math.round(n.best/n.amt*100));html+='<div style="background:rgba(255,255,255,0.05);border-radius:2px;height:3px;margin-top:5px;overflow:hidden"><div style="width:'+bar+'%;height:100%;background:'+(is90?'#ff9944':'var(--cyan)')+';border-radius:2px"></div></div><div style="font-size:10px;color:var(--text2);margin-top:3px">'+n.best+'/'+n.amt+' best session ('+bar+'%)</div>';}
     html+='</div>';
   });
   cont.innerHTML=html;
 }
+
+
 var QUEST_POOL=[
   {id:'plank',name:'Plank Hold',stat:'STR',unit:'seconds',desc:'Hold a plank for total time',why:'Activates more core muscles than sit-ups and builds deep stability.',targets:[60,90,120,180]},
   {id:'burpee',name:'Burpee Jumps',stat:'END',unit:'reps',desc:'Complete burpees across sessions',why:'Highest calorie burn per minute of any bodyweight move.',targets:[20,30,50,75]},
@@ -1050,11 +1037,10 @@ function updateUI(){
   document.getElementById('rankNextLabel').textContent=nextRank?nextRank.rank+' at Lv '+nextRank.min:'MAX RANK';
   var sLv=statLevel(S.strXP),aLv=statLevel(S.agiXP),eLv=statLevel(S.endXP),vLv=statLevel(S.vitXP);
   ['str','agi','end','vit'].forEach(function(s,i){var v=[sLv,aLv,eLv,vLv][i];document.getElementById(s+'Val').textContent=v;document.getElementById(s+'Lv').textContent=v;});
-  updateProteinStatus();updateWeightSleep();updateStreak();updateRecords();generateTips();buildGuidance();checkRecap();
+  updateProteinStatus();updateWeightSleep();updateStreak();updateRecords();generateTips();buildGuidance();checkRecap();updateSaunaStatus();renderMilestoneNotifications();
   var wk=getWeekKey();
   if(S.quest&&S.quest.week!==wk){S.questRerolled=false;S.quest=null;generateQuest();}
   else generateQuest();
-  renderMilestoneNotifications();
 }
 
 function updateProteinStatus(){
@@ -1108,6 +1094,7 @@ function showChart(type,el){
   else if(type==='run'){filtered=S.history.filter(function(h){return h.distance!=null;});data=filtered.map(function(h){return h.distance;});label='km';color='#aa88ff';title='Distance';}
   else if(type==='sleep'){filtered=S.history.filter(function(h){return h.sleep!=null;});data=filtered.map(function(h){return h.sleep;});label='hrs';color='#4488ff';title='Sleep';}
   else if(type==='weight'){filtered=S.history.filter(function(h){return h.weight!=null;});data=filtered.map(function(h){return h.weight;});label='kg';color='#ff6699';title='Weight';}
+  else if(type==='sauna'){filtered=S.history.filter(function(h){return h.sauna!=null;});data=filtered.map(function(h){return h.sauna;});label='min';color='#ff8c3c';title='Sauna Duration';}
   else{filtered=S.history.filter(function(h){return h.protein!=null;});data=filtered.map(function(h){return h.protein;});label='g';color='#f0c040';title='Protein';}
   var labels=filtered.map(function(h){return h.date.slice(4,10);});
   document.getElementById('chartTitle').textContent=title;
@@ -1142,9 +1129,9 @@ document.getElementById('distUnit').addEventListener('change',function(){updateP
 function updatePaceBadge(){var d=parseFloat(document.getElementById('distance').value)||0,t=parseFloat(document.getElementById('runTime').value)||0,unit=document.getElementById('distUnit').value,pb=document.getElementById('paceBadge');if(!d||!t){pb.innerHTML='';return;}var km=unit==='mi'?d*1.609:d,spd=km/(t/60);var label,color,mult;if(spd<6){label='🐢 Jog';color='#5a8fa8';mult='1.0×';}else if(spd<12){label='🏃 Run';color='#00d4ff';mult='1.4×';}else{label='⚡ Sprint';color='#f0c040';mult='2.0×';}pb.innerHTML='<span style="color:'+color+';font-size:11px">'+label+' '+mult+'</span>';}
 
 function previewWorkout(){
-  var suRaw=document.getElementById('situps').value,puRaw=document.getElementById('pushups').value,sqRaw=document.getElementById('squats').value,distRaw=document.getElementById('distance').value,sleepRaw=document.getElementById('sleepHours').value,weightRaw=document.getElementById('weightInput').value,proteinRaw=document.getElementById('proteinInput').value;
-  var su=suRaw!==''?parseInt(suRaw):null,pu=puRaw!==''?parseInt(puRaw):null,sq=sqRaw!==''?parseInt(sqRaw):null,dist=distRaw!==''?parseFloat(distRaw):null,sleep=sleepRaw!==''?parseFloat(sleepRaw):null,wInput=weightRaw!==''?parseFloat(weightRaw):null,protein=proteinRaw!==''?parseFloat(proteinRaw):null;
-  if(su===null&&pu===null&&sq===null&&dist===null&&sleep===null&&wInput===null&&protein===null){showDriveStatus('Nothing to log!','var(--red)');return;}
+  var suRaw=document.getElementById('situps').value,puRaw=document.getElementById('pushups').value,sqRaw=document.getElementById('squats').value,distRaw=document.getElementById('distance').value,sleepRaw=document.getElementById('sleepHours').value,weightRaw=document.getElementById('weightInput').value,proteinRaw=document.getElementById('proteinInput').value,saunaRaw=document.getElementById('saunaDuration').value;
+  var su=suRaw!==''?parseInt(suRaw):null,pu=puRaw!==''?parseInt(puRaw):null,sq=sqRaw!==''?parseInt(sqRaw):null,dist=distRaw!==''?parseFloat(distRaw):null,sleep=sleepRaw!==''?parseFloat(sleepRaw):null,wInput=weightRaw!==''?parseFloat(weightRaw):null,protein=proteinRaw!==''?parseFloat(proteinRaw):null,saunaMins=saunaRaw!==''?parseInt(saunaRaw):null;
+  if(su===null&&pu===null&&sq===null&&dist===null&&sleep===null&&wInput===null&&protein===null&&saunaMins===null){showDriveStatus('Nothing to log!','var(--red)');return;}
   var unit=document.getElementById('distUnit').value,runT=parseFloat(document.getElementById('runTime').value)||0;
   var suW=document.getElementById('suWeighted').checked?(parseFloat(document.getElementById('suWeight').value)||0):0;
   var puW=document.getElementById('puWeighted').checked?(parseFloat(document.getElementById('puWeight').value)||0):0;
@@ -1156,6 +1143,7 @@ function previewWorkout(){
   var sqSC=document.getElementById('sqSets').checked?(parseInt(document.getElementById('sqSetCount').value)||null):null;
   var sqRS=document.getElementById('sqSets').checked?(parseInt(document.getElementById('sqRepsSet').value)||null):null;
   var wUnit=document.getElementById('weightUnit').value;
+  var saunaType=document.getElementById('saunaType').value;
   var xpGain=0,strXP=0,agiXP=0,endXP=0,vitXP=0;
   if(su!==null){var x1=Math.round(su*(1+suW*0.3));strXP+=x1;xpGain+=x1;}
   if(pu!==null){var x2=Math.round(pu*1.2*(1+puW*0.3));strXP+=x2;xpGain+=x2;}
@@ -1164,19 +1152,22 @@ function previewWorkout(){
   if(sleep!==null){var q2=getSleepQuality(sleep);var x5=Math.round(50*(q2.pct/100));vitXP+=x5;xpGain+=x5;}
   var proteinXP=0;
   if(protein!==null){var wK3=wInput!=null?(wUnit==='lbs'?wInput*0.4536:wInput):getLatestWeightKg();var p3=S.profile||{};proteinXP=calcProteinXP(protein,wK3,p3.heightCm||0,p3.age||25,p3.activityLevel||'active',su!==null||pu!==null||sq!==null||dist!==null);xpGain+=proteinXP;}
+  var saunaXP=0;
+  if(saunaMins!==null&&saunaMins>=5){var sr=calcSaunaXP(saunaMins,saunaType,saunaTimingVal);saunaXP=sr.xp;vitXP+=saunaXP;xpGain+=saunaXP;}
   var wBonus=0;if(wInput!==null&&S.weights&&S.weights.length>=1){var r7b=S.history.slice(-7).filter(function(h){return h.situps!=null||h.pushups!=null||h.squats!=null||h.distance!=null;}).length;if(r7b>=4){wBonus=feelVal==='strong'?30:feelVal==='normal'?20:10;}else{var prev=S.weights[S.weights.length-1].val;if(r7b<=1&&(wInput-prev)>1)wBonus=-10;else wBonus=5;}}
   xpGain=Math.max(0,xpGain+wBonus);
   var bdDate=document.getElementById('backdateDate').value,bdTime=document.getElementById('backdateTime').value;
   var entryDate,entryTime;
   if(bdDate){var bd=new Date(bdDate+'T'+(bdTime||'12:00'));entryDate=bd.toDateString();entryTime=bd.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}
-  else{var now=new Date();if(sleep!==null&&su===null&&pu===null&&sq===null&&dist===null){var y=new Date(now);y.setDate(y.getDate()-1);entryDate=y.toDateString();}else entryDate=now.toDateString();entryTime=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}
-  pendingEntry={su:su,pu:pu,sq:sq,dist:dist,unit:unit,sleep:sleep,wInput:wInput,wUnit:wUnit,protein:protein,xpGain:xpGain,strXP:strXP,agiXP:agiXP,endXP:endXP,vitXP:vitXP,proteinXP:proteinXP,entryDate:entryDate,entryTime:entryTime,suW:suW,puW:puW,sqW:sqW,suSC:suSC,suRS:suRS,puSC:puSC,puRS:puRS,sqSC:sqSC,sqRS:sqRS};
+  else{var now=new Date();if(sleep!==null&&su===null&&pu===null&&sq===null&&dist===null&&saunaMins===null){var y=new Date(now);y.setDate(y.getDate()-1);entryDate=y.toDateString();}else entryDate=now.toDateString();entryTime=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}
+  pendingEntry={su:su,pu:pu,sq:sq,dist:dist,unit:unit,sleep:sleep,wInput:wInput,wUnit:wUnit,protein:protein,xpGain:xpGain,strXP:strXP,agiXP:agiXP,endXP:endXP,vitXP:vitXP,proteinXP:proteinXP,saunaMins:saunaMins,saunaType:saunaType,saunaTiming:saunaTimingVal,saunaXP:saunaXP,entryDate:entryDate,entryTime:entryTime,suW:suW,puW:puW,sqW:sqW,suSC:suSC,suRS:suRS,puSC:puSC,puRS:puRS,sqSC:sqSC,sqRS:sqRS};
   var rows=[];
-  if(su!==null)rows.push('<div class="summary-row"><span class="summary-label">Sit-ups</span><span class="summary-val">'+su+(suW?' @'+suW+'kg':'')+(suSC?' ('+suSC+'×'+suRS+')':'')+'</span></div>');
-  if(pu!==null)rows.push('<div class="summary-row"><span class="summary-label">Push-ups</span><span class="summary-val">'+pu+(puW?' @'+puW+'kg':'')+(puSC?' ('+puSC+'×'+puRS+')':'')+'</span></div>');
-  if(sq!==null)rows.push('<div class="summary-row"><span class="summary-label">Squats</span><span class="summary-val">'+sq+(sqW?' @'+sqW+'kg':'')+(sqSC?' ('+sqSC+'×'+sqRS+')':'')+'</span></div>');
+  if(su!==null)rows.push('<div class="summary-row"><span class="summary-label">Sit-ups</span><span class="summary-val">'+su+(suW?' @'+suW+'kg':'')+(suSC?' ('+suSC+'x'+suRS+')':'')+'</span></div>');
+  if(pu!==null)rows.push('<div class="summary-row"><span class="summary-label">Push-ups</span><span class="summary-val">'+pu+(puW?' @'+puW+'kg':'')+(puSC?' ('+puSC+'x'+puRS+')':'')+'</span></div>');
+  if(sq!==null)rows.push('<div class="summary-row"><span class="summary-label">Squats</span><span class="summary-val">'+sq+(sqW?' @'+sqW+'kg':'')+(sqSC?' ('+sqSC+'x'+sqRS+')':'')+'</span></div>');
   if(dist!==null)rows.push('<div class="summary-row"><span class="summary-label">Distance</span><span class="summary-val">'+dist+' '+unit+(runT?' in '+runT+'m':'')+'</span></div>');
   if(protein!==null)rows.push('<div class="summary-row"><span class="summary-label">Protein</span><span class="summary-val">'+protein+'g'+(proteinXP>0?' (+'+proteinXP+' XP)':'')+'</span></div>');
+  if(saunaMins!==null&&saunaMins>=5){var tl=saunaType==='traditional'?'Finnish':saunaType==='infrared'?'Infrared':'Steam';rows.push('<div class="summary-row"><span class="summary-label">Sauna</span><span class="summary-val">'+saunaMins+'min '+tl+' ('+saunaTimingVal+')'+(saunaXP>0?' +'+saunaXP+' VIT XP':'')+'</span></div>');}
   if(sleep!==null)rows.push('<div class="summary-row"><span class="summary-label">Sleep</span><span class="summary-val">'+sleep+'h — '+getSleepQuality(sleep).label+'</span></div>');
   if(wInput!==null)rows.push('<div class="summary-row"><span class="summary-label">Weight</span><span class="summary-val">'+wInput+' '+wUnit+'</span></div>');
   rows.push('<div class="summary-row"><span class="summary-label">Logged as</span><span class="summary-val">'+entryDate+' '+entryTime+'</span></div>');
@@ -1194,6 +1185,7 @@ function submitWorkout(){
   S.xp+=e.xpGain;S.strXP+=e.strXP;S.agiXP+=e.agiXP;S.endXP+=e.endXP;S.vitXP+=e.vitXP;
   if(e.wInput!==null){S.weights=S.weights||[];S.weights.push({val:e.wInput,unit:e.wUnit,date:e.entryDate});}
   if(e.sleep!==null)S.lastSleep=e.sleep;
+  if(e.saunaMins!==null&&e.saunaMins>=5){if(!S.saunaSessions)S.saunaSessions=[];S.saunaSessions.push({date:new Date().toISOString(),mins:e.saunaMins,type:e.saunaType,timing:e.saunaTiming,xp:e.saunaXP});}
   var entry={date:e.entryDate,time:e.entryTime,xp:e.xpGain};
   if(e.su!==null){entry.situps=e.su;if(e.suSC){entry.suSets=e.suSC;entry.suReps=e.suRS;}}
   if(e.pu!==null){entry.pushups=e.pu;if(e.puSC){entry.puSets=e.puSC;entry.puReps=e.puRS;}}
@@ -1202,6 +1194,7 @@ function submitWorkout(){
   if(e.sleep!==null)entry.sleep=e.sleep;
   if(e.wInput!==null){entry.weight=e.wInput;entry.wUnit=e.wUnit;}
   if(e.protein!==null)entry.protein=e.protein;
+  if(e.saunaMins!==null&&e.saunaMins>=5)entry.sauna=e.saunaMins;
   checkMilestoneUnlocks(entry);
   var existIdx=S.history.findIndex(function(h){return h.date===e.entryDate;});
   if(existIdx>=0){
@@ -1213,6 +1206,7 @@ function submitWorkout(){
     if(entry.protein!=null)ex.protein=(ex.protein||0)+entry.protein;
     if(entry.sleep!=null){ex.sleep=entry.sleep;S.lastSleep=entry.sleep;}
     if(entry.weight!=null)ex.weight=entry.weight;
+    if(entry.sauna!=null)ex.sauna=(ex.sauna||0)+entry.sauna;
     ex.xp=(ex.xp||0)+entry.xp;ex.time=entry.time;
     if(entry.suSets){ex.suSets=entry.suSets;ex.suReps=entry.suReps;}
     if(entry.puSets){ex.puSets=entry.puSets;ex.puReps=entry.puReps;}
@@ -1224,7 +1218,6 @@ function submitWorkout(){
   document.getElementById('xpGainNum').textContent='+'+e.xpGain+' XP';
   var box=document.getElementById('xpGainBox');box.classList.add('show');setTimeout(function(){box.classList.remove('show');},4000);
   updateUI();clearForm();showTab('status');
-  // Fire unlock overlay(s) after a short delay so Status tab is visible
   setTimeout(processMSUnlockQueue,600);
   if(newRank!==oldRank){var r=getRank(newLevel);document.getElementById('rankUpLabel').style.color=r.color;document.getElementById('rankUpLetter').textContent=r.rank;document.getElementById('rankUpLetter').style.color=r.color;document.getElementById('rankUpLetter').style.textShadow='0 0 40px '+r.glow;document.getElementById('rankUpName').textContent=r.rank+' RANK ACHIEVED';document.getElementById('rankUpName').style.color=r.color;document.getElementById('rankUpOverlay').classList.add('show');}
   else if(newLevel>oldLevel){document.getElementById('levelUpNum').textContent=newLevel;document.getElementById('levelUpTitle').textContent=getTitle(newLevel);document.getElementById('levelUpOverlay').classList.add('show');}
@@ -1232,12 +1225,17 @@ function submitWorkout(){
 }
 
 function clearForm(){
-  ['situps','pushups','squats','distance','runTime','sleepHours','weightInput','suWeight','puWeight','sqWeight','backdateDate','backdateTime','proteinInput','suSetCount','suRepsSet','puSetCount','puRepsSet','sqSetCount','sqRepsSet'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  ['situps','pushups','squats','distance','runTime','sleepHours','weightInput','suWeight','puWeight','sqWeight','backdateDate','backdateTime','proteinInput','suSetCount','suRepsSet','puSetCount','puRepsSet','sqSetCount','sqRepsSet','saunaDuration'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
   ['suWeighted','puWeighted','sqWeighted','suSets','puSets','sqSets'].forEach(function(id){var el=document.getElementById(id);if(el)el.checked=false;});
   ['suWeight','puWeight','sqWeight'].forEach(function(id){var el=document.getElementById(id);if(el)el.style.display='none';});
   ['suSetsWrap','puSetsWrap','sqSetsWrap'].forEach(function(id){var el=document.getElementById(id);if(el)el.classList.remove('show');});
   document.getElementById('paceBadge').innerHTML='';
   document.getElementById('proteinAdviceBox').classList.remove('show');
+  var sp=document.getElementById('saunaXPPreview');if(sp)sp.style.display='none';
+  var sh=document.getElementById('saunaDurationHint');if(sh)sh.textContent='';
+  document.querySelectorAll('[data-sval]').forEach(function(b){b.classList.remove('active');});
+  var def=document.querySelector('[data-sval="standalone"]');if(def)def.classList.add('active');
+  saunaTimingVal='standalone';
 }
 function closeLevelUp(){document.getElementById('levelUpOverlay').classList.remove('show');}
 function closeRankUp(){document.getElementById('rankUpOverlay').classList.remove('show');}
