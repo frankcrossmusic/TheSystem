@@ -581,13 +581,30 @@ function updateSaunaPreview(){
 }
 function getSaunaWeekSessions(){
   if(!S.saunaSessions||!S.saunaSessions.length)return[];
-  return S.saunaSessions.filter(function(s){return(Date.now()-new Date(s.date).getTime())<604800000;});
+  // Use calendar week (Monday 00:00:00 to Sunday 23:59:59) not a rolling 7-day window
+  var now=new Date();
+  var day=now.getDay()||7; // Monday=1 ... Sunday=7
+  var monday=new Date(now);
+  monday.setDate(now.getDate()-(day-1));
+  monday.setHours(0,0,0,0);
+  var sunday=new Date(monday);
+  sunday.setDate(monday.getDate()+6);
+  sunday.setHours(23,59,59,999);
+  return S.saunaSessions.filter(function(s){
+    var d=new Date(s.date);
+    return d>=monday&&d<=sunday;
+  });
 }
 function updateSaunaStatus(){
   if(!S.saunaSessions)S.saunaSessions=[];
   var el=document.getElementById('saunaLastDisplay');if(!el)return;
   if(!S.saunaSessions.length){el.textContent='—';document.getElementById('saunaLastLabel').textContent='No sessions yet';}
-  else{var last=S.saunaSessions[S.saunaSessions.length-1];var tl=last.type==='traditional'?'Finnish':last.type==='infrared'?'Infrared':'Steam';el.textContent=last.mins+'min';document.getElementById('saunaLastLabel').textContent=tl+' · '+last.timing+' · '+new Date(last.date).toLocaleDateString([],{month:'short',day:'numeric'});}
+  else{
+    var last=S.saunaSessions.slice().sort(function(a,b){return new Date(b.date)-new Date(a.date);})[0];
+    var tl=last.type==='traditional'?'Finnish':last.type==='infrared'?'Infrared':'Steam';
+    el.textContent=last.mins+'min';
+    document.getElementById('saunaLastLabel').textContent=tl+' · '+last.timing+' · '+new Date(last.date).toLocaleDateString([],{month:'short',day:'numeric'});
+  }
   var wk=getSaunaWeekSessions(),wc=wk.length,wm=wk.reduce(function(a,s){return a+s.mins;},0);
   document.getElementById('saunaWeekCount').textContent=wc;
   var score,scoreColor,scoreTxt,barPct,adviceTxt;
@@ -1185,7 +1202,7 @@ function submitWorkout(){
   S.xp+=e.xpGain;S.strXP+=e.strXP;S.agiXP+=e.agiXP;S.endXP+=e.endXP;S.vitXP+=e.vitXP;
   if(e.wInput!==null){S.weights=S.weights||[];S.weights.push({val:e.wInput,unit:e.wUnit,date:e.entryDate});}
   if(e.sleep!==null)S.lastSleep=e.sleep;
-  if(e.saunaMins!==null&&e.saunaMins>=5){if(!S.saunaSessions)S.saunaSessions=[];S.saunaSessions.push({date:new Date().toISOString(),mins:e.saunaMins,type:e.saunaType,timing:e.saunaTiming,xp:e.saunaXP});}
+  if(e.saunaMins!==null&&e.saunaMins>=5){if(!S.saunaSessions)S.saunaSessions=[];S.saunaSessions.push({date:new Date(e.entryDate).toISOString(),mins:e.saunaMins,type:e.saunaType,timing:e.saunaTiming,xp:e.saunaXP});}
   var entry={date:e.entryDate,time:e.entryTime,xp:e.xpGain};
   if(e.su!==null){entry.situps=e.su;if(e.suSC){entry.suSets=e.suSC;entry.suReps=e.suRS;}}
   if(e.pu!==null){entry.pushups=e.pu;if(e.puSC){entry.puSets=e.puSC;entry.puReps=e.puRS;}}
